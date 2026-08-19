@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------
+   TEMA — barbearia old-school: café-preto profundo, vermelho de
+   poste de barbeiro, dourado latão. Portado 1:1 de barbearia-app.jsx.
+   Este é o único tema visual do produto (não segue dark/light do
+   sistema — é a identidade de marca, sempre igual).
+--------------------------------------------------------------- */
+:root {
+  --ink: #181410;
+  --panel: #241e17;
+  --line: #382f25;
+  --brass: #c69b3b;
+  --barber-red: #a8342a;
+  --cream: #f1e9da;
+  --muted: #8c8175;
+
+  --success: #6fbf8f;
+  --success-bg: #1f3327;
+  --danger: #d9695f;
+  --danger-light: #ff8a7a;
+  --danger-bg: #3a2320;
+  --highlight-bg: #3a3020;
+  --whatsapp: #25d366;
+  --whatsapp-ink: #0b1d10;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-panel: var(--panel);
+  --color-line: var(--line);
+  --color-brass: var(--brass);
+  --color-barber-red: var(--barber-red);
+  --color-cream: var(--cream);
+  --color-muted: var(--muted);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-danger: var(--danger);
+  --color-danger-light: var(--danger-light);
+  --color-danger-bg: var(--danger-bg);
+  --color-highlight-bg: var(--highlight-bg);
+  --color-whatsapp: var(--whatsapp);
+  --color-whatsapp-ink: var(--whatsapp-ink);
+  --font-heading: var(--font-oswald);
+  --font-body: var(--font-work-sans);
+  --font-mono-receipt: var(--font-jetbrains-mono);
+}
+
+body {
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-work-sans), sans-serif;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3025 transparent;
+}
+
+/* ---------------------------------------------------------------
+   ANIMAÇÕES — portadas de barbearia-app.jsx (GlobalStyle)
+--------------------------------------------------------------- */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes stripeMove {
+  from { background-position: 0 0; }
+  to { background-position: 56px 0; }
+}
+@keyframes stampIn {
+  0% { opacity: 0; transform: scale(2.4) rotate(-16deg); }
+  55% { opacity: 1; transform: scale(0.92) rotate(-9deg); }
+  100% { transform: scale(1) rotate(-7deg); opacity: 1; }
+}
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-10px) rotate(calc(var(--r, 0deg) + 4deg)); }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes shine {
+  0% { transform: translateX(-120%) skewX(-15deg); }
+  100% { transform: translateX(220%) skewX(-15deg); }
+}
+
+.anim-step { animation: fadeInUp 0.38s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+.anim-pop { animation: popIn 0.28s cubic-bezier(0.2, 0.8, 0.3, 1.2) both; }
+.anim-fadein { animation: fadeIn 0.5s ease both; }
+.pole-anim { animation: stripeMove 2.2s linear infinite; }
+.float-icon { animation: floatSlow 5s ease-in-out infinite; }
+.stamp-in { animation: stampIn 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+.hover-lift { transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease; }
+.hover-lift:hover { transform: translateY(-3px); box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.55); }
+.press-scale { transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.2s ease; }
+.press-scale:active { transform: scale(0.96); }
+.press-scale:hover { filter: brightness(1.08); }
+.btn-shine { position: relative; overflow: hidden; }
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 40%; height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+  transform: translateX(-120%) skewX(-15deg);
+}
+.btn-shine:hover::after { animation: shine 0.9s ease; }
+.smooth { transition: all 0.22s cubic-bezier(0.2, 0.7, 0.3, 1); }
