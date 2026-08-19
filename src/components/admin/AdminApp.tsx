@@ -142,15 +142,6 @@ export function AdminApp(data: AdminData) {
       <aside className="w-56 shrink-0 border-r border-line bg-panel p-3 flex flex-col gap-1 sticky top-0 h-screen overflow-y-auto">
         <div className="px-2 py-3 mb-2">
           <div className="text-sm font-semibold text-cream font-heading truncate">{tenant.shop_name}</div>
-          <span
-            className="inline-block mt-1 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded font-body"
-            style={{
-              background: tenant.subscription_status === "trial" ? "var(--highlight-bg)" : tenant.subscription_status === "active" ? "var(--success-bg)" : "var(--danger-bg)",
-              color: tenant.subscription_status === "trial" ? "var(--brass)" : tenant.subscription_status === "active" ? "var(--success)" : "var(--danger)",
-            }}
-          >
-            {tenant.subscription_status === "trial" ? "Período de teste" : tenant.subscription_status === "active" ? "Assinatura ativa" : "Assinatura cancelada"}
-          </span>
         </div>
 
         {NAV_SECTIONS.map((section) => (
