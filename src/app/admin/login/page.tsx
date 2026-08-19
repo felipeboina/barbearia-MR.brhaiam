@@ -5,6 +5,9 @@ import { LoginForm } from "@/components/marketing/LoginForm";
 import { getTheTenant } from "@/lib/current-tenant";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+// Precisa checar se já existe sessão ativa a cada requisição.
+export const dynamic = "force-dynamic";
+
 export default async function AdminLoginPage() {
   const tenant = await getTheTenant();
   if (!tenant) redirect("/setup");

@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import { SetupForm } from "@/components/marketing/SetupForm";
 import { getTheTenant } from "@/lib/current-tenant";
 
+// Precisa checar se a barbearia já foi configurada a cada requisição (esse
+// estado muda assim que o setup é concluído).
+export const dynamic = "force-dynamic";
+
 export default async function SetupPage() {
   const tenant = await getTheTenant();
   if (tenant) redirect("/admin/login");

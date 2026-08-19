@@ -3,6 +3,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AdminApp } from "@/components/admin/AdminApp";
 import type { Appointment, Barber, Block, Client, Plan, PlanSignup, Product, Service, Transaction } from "@/lib/types";
 
+// Painel autenticado — precisa checar sessão/dados a cada requisição, nunca
+// servir uma versão estática congelada do momento do build.
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
   const { tenant } = await requireTenantSession();
 

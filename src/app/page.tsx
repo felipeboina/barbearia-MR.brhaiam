@@ -7,6 +7,10 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PublicBookingApp } from "@/components/booking/PublicBookingApp";
 import type { Barber, Plan, Product, Service } from "@/lib/types";
 
+// Sempre renderizada por requisição — nunca pode ser servida como HTML
+// estático congelado do momento do build (agenda/serviços mudam o tempo todo).
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const tenant = await getTheTenant();
 
