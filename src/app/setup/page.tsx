@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function SetupPage() {
   const tenant = await getTheTenant();
-  if (tenant) redirect("/admin/login");
+  if (tenant) redirect("/admin");
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 py-16">

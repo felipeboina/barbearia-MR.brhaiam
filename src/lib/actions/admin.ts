@@ -1,30 +1,27 @@
 "use server";
 
 /**
- * Ações do painel admin (autenticado). Todas usam o client Supabase
- * vinculado à sessão (RLS aplicado automaticamente por tenant_id =
- * auth_tenant_id()) — nunca aceitam tenant_id vindo do cliente.
+ * Ações do painel admin. Site ainda sem autenticação (decisão explícita,
+ * por enquanto) — usam o client com a service role key (bypassa RLS) e
+ * filtram pelo tenant_id da única barbearia cadastrada, resolvida no
+ * servidor via getTheTenant(). Nunca aceitam tenant_id vindo do cliente.
  */
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTheTenant } from "@/lib/current-tenant";
 import { todayStr } from "@/lib/business/format";
 import type { AppointmentProductItem, TransactionType } from "@/lib/types";
 
 async function getSessionClientAndTenant() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Não autenticado.");
-  const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("id", user.id).single();
-  if (!profile) throw new Error("Tenant não encontrado.");
-  return { supabase, tenantId: profile.tenant_id as string };
+  const tenant = await getTheTenant();
+  if (!tenant) throw new Error("Barbearia ainda não configurada.");
+  return { supabase: createSupabaseAdminClient(), tenantId: tenant.id };
 }
 
 // ---------------------------------------------------------------- agenda
 
 export async function completeAppointment(apptId: string, paymentMethod: string) {
-  const { supabase } = await getSessionClientAndTenant();
-  const { error } = await supabase.rpc("complete_appointment", { p_appt_id: apptId, p_payment_method: paymentMethod });
+  const { supabase, tenantId } = await getSessionClientAndTenant();
+  const { error } = await supabase.rpc("complete_appointment", { p_appt_id: apptId, p_payment_method: paymentMethod, p_tenant_id: tenantId });
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
