@@ -1,41 +1,56 @@
 "use server";
 
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getRootDomain } from "@/lib/subdomain";
 import { getTheTenant } from "@/lib/current-tenant";
+import { headers } from "next/headers";
 
 /**
  * Slug interno fixo — o banco continua sendo multi-tenant por baixo (coluna
  * tenant_id + RLS em tudo), mas o app só cria e usa uma única linha em
- * `tenants`. O slug nunca aparece pro usuário (não há subdomínio nem login).
+ * `tenants`. O slug nunca aparece pro usuário (não há mais subdomínio).
  */
 const INTERNAL_SLUG = "main";
 
 export interface SetupState {
   error?: string;
-  success?: boolean;
+  success?: { needsEmailConfirmation: boolean };
 }
 
 export async function setupTenant(_prevState: SetupState, formData: FormData): Promise<SetupState> {
   const existing = await getTheTenant();
-  if (existing) return { error: "Essa barbearia já foi configurada." };
+  if (existing) return { error: "Essa barbearia já foi configurada. Faça login." };
 
   const shopName = String(formData.get("shopName") || "").trim();
+  const email = String(formData.get("email") || "").trim();
+  const password = String(formData.get("password") || "");
+
   if (shopName.length < 2) return { error: "Digite o nome da sua barbearia." };
+  if (!email.includes("@")) return { error: "Digite um e-mail válido." };
+  if (password.length < 6) return { error: "A senha precisa ter pelo menos 6 caracteres." };
 
-  const supabase = createSupabaseAdminClient();
+  const requestHeaders = await headers();
+  const protocol = requestHeaders.get("x-forwarded-proto") || "https";
+  const root = getRootDomain();
+  const emailRedirectTo = `${protocol}://${root}/setup/confirmado`;
 
-  const { data: tenant, error } = await supabase.from("tenants").insert({ slug: INTERNAL_SLUG, shop_name: shopName }).select().single();
-  if (error || !tenant) return { error: "Não deu pra criar sua barbearia, tenta de novo." };
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo,
+      data: { shop_name: shopName, subdomain: INTERNAL_SLUG },
+    },
+  });
 
-  // Barbeiro e serviços de exemplo, pra já abrir o painel com algo pra editar
-  // (mesma lista que o gatilho de onboarding multi-tenant criava antes).
-  await supabase.from("barbers").insert({ tenant_id: tenant.id, name: "Barbeiro 1", commission: 40 });
-  await supabase.from("services").insert([
-    { tenant_id: tenant.id, name: "Corte Masculino", price: 45, duration: 30 },
-    { tenant_id: tenant.id, name: "Barba", price: 30, duration: 20 },
-    { tenant_id: tenant.id, name: "Corte + Barba", price: 65, duration: 50 },
-    { tenant_id: tenant.id, name: "Sobrancelha", price: 15, duration: 10 },
-  ]);
+  if (error) {
+    if (error.message.toLowerCase().includes("already registered")) {
+      return { error: "Já existe uma conta com esse e-mail." };
+    }
+    return { error: `Não deu pra criar sua conta: ${error.message}` };
+  }
+  if (!data.user) return { error: "Não deu pra criar sua conta, tenta de novo." };
 
-  return { success: true };
+  return { success: { needsEmailConfirmation: !data.session } };
 }

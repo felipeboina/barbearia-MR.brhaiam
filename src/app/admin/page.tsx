@@ -1,16 +1,16 @@
-import { requireTenant } from "@/lib/current-tenant";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { requireTenantSession } from "@/lib/current-tenant";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AdminApp } from "@/components/admin/AdminApp";
 import type { Appointment, Barber, Block, Client, Plan, PlanSignup, Product, Service, Transaction } from "@/lib/types";
 
-// Lê dados ao vivo a cada requisição, nunca uma versão estática congelada do
-// momento do build.
+// Painel autenticado — precisa checar sessão/dados a cada requisição, nunca
+// servir uma versão estática congelada do momento do build.
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const tenant = await requireTenant();
+  const { tenant } = await requireTenantSession();
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseServerClient();
   const [
     { data: barbers },
     { data: services },
