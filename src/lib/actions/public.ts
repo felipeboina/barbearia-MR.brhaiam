@@ -26,7 +26,7 @@ export async function getSlots(
   const tenant = await resolveTenant();
   const supabase = createSupabaseAdminClient();
 
-  const [{ data: appointments }, { data: blocks }] = await Promise.all([
+  const [{ data: appointments }, { data: blocks }, { data: barber }] = await Promise.all([
     supabase
       .from("appointments")
       .select("*")
@@ -35,10 +35,12 @@ export async function getSlots(
       .eq("date", date)
       .neq("status", "cancelado"),
     supabase.from("blocks").select("*").eq("tenant_id", tenant.id).eq("date", date),
+    supabase.from("barbers").select("start_hour, end_hour").eq("id", barberId).maybeSingle(),
   ]);
 
   return computeAvailableSlots({
     barberId,
+    barberHours: barber,
     date,
     appointments: (appointments as never[]) || [],
     blocks: (blocks as never[]) || [],

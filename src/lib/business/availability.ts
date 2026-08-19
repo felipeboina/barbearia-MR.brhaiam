@@ -20,8 +20,6 @@ export function computeTodayAvailability(
   const today = todayStr();
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
-  const startMin = Math.max(config.open_hour * 60, Math.ceil(nowMin / config.slot_min) * config.slot_min);
-  const closeMin = config.close_hour * 60;
   const shopClosedToday = blocks.some((bl) => bl.all_day && bl.barber_id === null && bl.date === today);
   if (shopClosedToday) return { freeSlots: 0, activeBarbers: 0 };
 
@@ -31,6 +29,10 @@ export function computeTodayAvailability(
     const offToday = blocks.some((bl) => bl.all_day && bl.date === today && bl.barber_id === b.id);
     if (offToday) return;
     activeBarbers++;
+    const openHour = b.start_hour ?? config.open_hour;
+    const closeHour = b.end_hour ?? config.close_hour;
+    const startMin = Math.max(openHour * 60, Math.ceil(nowMin / config.slot_min) * config.slot_min);
+    const closeMin = closeHour * 60;
     const dayAppts = appointments.filter((a) => a.barber_id === b.id && a.date === today && a.status !== "cancelado");
     const timeBlocks = blocks.filter((bl) => !bl.all_day && bl.date === today && (bl.barber_id === b.id || bl.barber_id === null));
     for (let m = startMin; m + config.slot_min <= closeMin; m += config.slot_min) {
@@ -55,13 +57,14 @@ export interface AvailableSlot {
 
 export function computeAvailableSlots(params: {
   barberId: string | null;
+  barberHours?: Pick<Barber, "start_hour" | "end_hour"> | null;
   date: string;
   appointments: Appointment[];
   blocks: Block[];
   config: SlotConfig;
   serviceDuration: number | null;
 }): { slots: AvailableSlot[]; isFullyBlocked: boolean; fullDayBlockLabel: string | null } {
-  const { barberId, date, appointments, blocks, config, serviceDuration } = params;
+  const { barberId, barberHours, date, appointments, blocks, config, serviceDuration } = params;
 
   const dayBlocks = blocks.filter((bl) => (bl.barber_id === null || bl.barber_id === barberId) && bl.date === date);
   const isFullyBlocked = dayBlocks.some((bl) => bl.all_day);
@@ -71,7 +74,9 @@ export function computeAvailableSlots(params: {
     return { slots: [], isFullyBlocked, fullDayBlockLabel };
   }
 
-  const { open_hour: openHour, close_hour: closeHour, slot_min: slotMin } = config;
+  const openHour = barberHours?.start_hour ?? config.open_hour;
+  const closeHour = barberHours?.end_hour ?? config.close_hour;
+  const { slot_min: slotMin } = config;
   const dayAppts = appointments.filter((a) => a.barber_id === barberId && a.date === date && a.status !== "cancelado");
   const timeBlocks = dayBlocks.filter((bl) => !bl.all_day);
 

@@ -19,7 +19,7 @@ export function EstoquePanel({ products }: AdminData) {
   const [sellQty, setSellQty] = useState(1);
   const [restockingId, setRestockingId] = useState<string | null>(null);
   const [restockQty, setRestockQty] = useState(1);
-  const [newProduct, setNewProduct] = useState({ name: "", stock: "", minStock: "5", price: "" });
+  const [newProduct, setNewProduct] = useState({ name: "", stock: "", minStock: "5", price: "", cost: "" });
   const [submitting, setSubmitting] = useState(false);
 
   const confirmSell = async (productId: string, stock: number) => {
@@ -47,9 +47,10 @@ export function EstoquePanel({ products }: AdminData) {
       stock: parseInt(newProduct.stock) || 0,
       minStock: parseInt(newProduct.minStock) || 5,
       price: parseFloat(newProduct.price),
+      cost: parseFloat(newProduct.cost) || 0,
     });
     setSubmitting(false);
-    setNewProduct({ name: "", stock: "", minStock: "5", price: "" });
+    setNewProduct({ name: "", stock: "", minStock: "5", price: "", cost: "" });
     router.refresh();
   };
 
@@ -71,7 +72,8 @@ export function EstoquePanel({ products }: AdminData) {
               <div>
                 <div className="text-sm font-semibold text-cream font-body">{p.name}</div>
                 <div className="text-xs text-muted font-body">
-                  {p.stock} em estoque (mín. {p.min_stock}) · {fmtMoney(p.price)}
+                  {p.stock} em estoque (mín. {p.min_stock}) · venda {fmtMoney(p.price)}
+                  {p.cost > 0 && <> · custo {fmtMoney(p.cost)}</>}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -119,8 +121,11 @@ export function EstoquePanel({ products }: AdminData) {
           <Field label="Nome">
             <TextInput value={newProduct.name} onChange={(e) => setNewProduct((s) => ({ ...s, name: e.target.value }))} />
           </Field>
-          <Field label="Preço">
+          <Field label="Preço de venda">
             <TextInput type="number" step="0.01" value={newProduct.price} onChange={(e) => setNewProduct((s) => ({ ...s, price: e.target.value }))} />
+          </Field>
+          <Field label="Custo (opcional)">
+            <TextInput type="number" step="0.01" value={newProduct.cost} onChange={(e) => setNewProduct((s) => ({ ...s, cost: e.target.value }))} />
           </Field>
           <Field label="Estoque inicial">
             <TextInput type="number" value={newProduct.stock} onChange={(e) => setNewProduct((s) => ({ ...s, stock: e.target.value }))} />

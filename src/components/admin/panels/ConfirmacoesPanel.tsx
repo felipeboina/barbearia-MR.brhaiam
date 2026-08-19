@@ -56,7 +56,7 @@ export function ConfirmacoesPanel({ tenant, appointments, barbers, services }: A
         </div>
         <div className="flex items-center gap-2">
           <a
-            href={waLink(a.phone, confirmMessage({ clientName: a.client_name, date: a.date, time: a.time.slice(0, 5) }, tenant.shop_name))}
+            href={waLink(a.phone, confirmMessage({ clientName: a.client_name, date: a.date, time: a.time.slice(0, 5) }, tenant))}
             target="_blank"
             rel="noopener noreferrer"
             className="press-scale w-8 h-8 rounded-full flex items-center justify-center bg-whatsapp text-whatsapp-ink"

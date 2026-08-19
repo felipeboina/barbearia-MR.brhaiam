@@ -6,7 +6,7 @@
  * auth_tenant_id()) — nunca aceitam tenant_id vindo do cliente.
  */
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { todayStr } from "@/lib/business/format";
+import { normalizePhone, todayStr } from "@/lib/business/format";
 import type { AppointmentProductItem, TransactionType } from "@/lib/types";
 
 async function getSessionClientAndTenant() {
@@ -122,6 +122,18 @@ export async function sellProduct(productId: string, qty: number) {
     value: +(product.price * sellQty).toFixed(2),
     commission: 0,
   });
+  if (product.cost > 0) {
+    await supabase.from("transactions").insert({
+      tenant_id: tenantId,
+      date: todayStr(),
+      type: "despesa",
+      category_id: "custo_produto",
+      product_id: productId,
+      description: `Custo: ${sellQty}x ${product.name}`,
+      value: +(product.cost * sellQty).toFixed(2),
+      commission: 0,
+    });
+  }
 }
 
 export async function restockProduct(productId: string, qty: number) {
@@ -131,9 +143,9 @@ export async function restockProduct(productId: string, qty: number) {
   await supabase.from("products").update({ stock: product.stock + qty }).eq("id", productId);
 }
 
-export async function addProduct(data: { name: string; stock: number; minStock: number; price: number }) {
+export async function addProduct(data: { name: string; stock: number; minStock: number; price: number; cost: number }) {
   const { supabase, tenantId } = await getSessionClientAndTenant();
-  await supabase.from("products").insert({ tenant_id: tenantId, name: data.name, stock: data.stock, min_stock: data.minStock, price: data.price });
+  await supabase.from("products").insert({ tenant_id: tenantId, name: data.name, stock: data.stock, min_stock: data.minStock, price: data.price, cost: data.cost });
 }
 
 export async function deleteProduct(id: string) {
@@ -244,7 +256,7 @@ export async function addBarber(name: string, commission: number) {
   await supabase.from("barbers").insert({ tenant_id: tenantId, name, commission });
 }
 
-export async function updateBarber(id: string, patch: Partial<{ name: string; commission: number }>) {
+export async function updateBarber(id: string, patch: Partial<{ name: string; commission: number; start_hour: number | null; end_hour: number | null }>) {
   const { supabase } = await getSessionClientAndTenant();
   await supabase.from("barbers").update(patch).eq("id", id);
 }
@@ -267,6 +279,108 @@ export async function updateService(id: string, patch: Partial<{ name: string; p
 export async function deleteService(id: string) {
   const { supabase } = await getSessionClientAndTenant();
   await supabase.from("services").delete().eq("id", id);
+}
+
+// ---------------------------------------------------------------- atendimento avulso
+
+export interface RegisterWalkInInput {
+  clientName: string;
+  phone: string;
+  serviceId: string;
+  barberId: string;
+  paymentMethod: string;
+}
+
+/**
+ * Registra um corte feito na hora, sem ter passado por agendamento prévio —
+ * já cria o atendimento como "concluido" e lança a transação financeira na
+ * hora. Não passa pelo desconto de indicação (é um atendimento avulso, sem
+ * o contexto de agendamento público).
+ */
+export async function registerWalkIn(input: RegisterWalkInInput): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { supabase, tenantId } = await getSessionClientAndTenant();
+  const clientName = input.clientName.trim();
+  if (clientName.length < 2) return { ok: false, error: "Digite o nome do cliente." };
+
+  const [{ data: service }, { data: barber }] = await Promise.all([
+    supabase.from("services").select("*").eq("id", input.serviceId).single(),
+    supabase.from("barbers").select("*").eq("id", input.barberId).single(),
+  ]);
+  if (!service || !barber) return { ok: false, error: "Serviço ou barbeiro inválido." };
+
+  const phone = normalizePhone(input.phone);
+  const date = todayStr();
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const commission = +(((service.price || 0) * (barber.commission || 0)) / 100).toFixed(2);
+
+  const { data: appt, error: apptError } = await supabase
+    .from("appointments")
+    .insert({
+      tenant_id: tenantId,
+      client_name: clientName,
+      phone,
+      barber_id: barber.id,
+      service_id: service.id,
+      date,
+      time,
+      duration_min: service.duration,
+      status: "concluido",
+      payment_method: input.paymentMethod,
+    })
+    .select()
+    .single();
+  if (apptError || !appt) return { ok: false, error: "Não deu pra registrar o atendimento." };
+
+  await supabase.from("transactions").insert({
+    tenant_id: tenantId,
+    date,
+    type: "servico",
+    appt_id: appt.id,
+    barber_id: barber.id,
+    service_name: service.name,
+    client_name: clientName,
+    phone: phone || null,
+    value: service.price,
+    commission,
+    payment_method: input.paymentMethod,
+  });
+
+  if (phone.length >= 8) {
+    const { data: existing } = await supabase.from("clients").select("*").eq("tenant_id", tenantId).eq("phone", phone).maybeSingle();
+    if (existing) {
+      await supabase
+        .from("clients")
+        .update({ visits: (existing.visits || 0) + 1, total_spent: (existing.total_spent || 0) + service.price, last_visit: date })
+        .eq("id", existing.id);
+    } else {
+      await supabase.from("clients").insert({ tenant_id: tenantId, phone, name: clientName, visits: 1, total_spent: service.price, last_visit: date });
+    }
+  }
+
+  return { ok: true };
+}
+
+export interface RegisterClientInput {
+  name: string;
+  phone: string;
+  birthday: string | null;
+}
+
+/** Cadastra um cliente direto, sem vincular a nenhum atendimento. */
+export async function registerClient(input: RegisterClientInput): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { supabase, tenantId } = await getSessionClientAndTenant();
+  const name = input.name.trim();
+  const phone = normalizePhone(input.phone);
+  if (name.length < 2 || phone.length < 8) return { ok: false, error: "Preencha nome e telefone válidos." };
+
+  const { data: existing } = await supabase.from("clients").select("id").eq("tenant_id", tenantId).eq("phone", phone).maybeSingle();
+  if (existing) {
+    await supabase.from("clients").update({ name, birthday: input.birthday }).eq("id", existing.id);
+  } else {
+    await supabase.from("clients").insert({ tenant_id: tenantId, phone, name, birthday: input.birthday, visits: 0, total_spent: 0, last_visit: null });
+  }
+  return { ok: true };
 }
 
 export type { AppointmentProductItem };

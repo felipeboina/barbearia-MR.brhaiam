@@ -6,6 +6,8 @@
 
 export type SubscriptionStatus = "trial" | "active" | "canceled";
 
+export type MessageTemplateKey = "confirmacao" | "lembrete" | "aniversario" | "reengajamento" | "aviso_antecipado" | "vencimento_plano";
+
 export interface Tenant {
   id: string;
   slug: string;
@@ -32,6 +34,10 @@ export interface Tenant {
   plans_enabled: boolean;
   early_reminder_days: number;
   plan_expiry_reminder_days: number;
+  loyalty_enabled: boolean;
+  birthday_enabled: boolean;
+  message_sender_number: string;
+  templates: Partial<Record<MessageTemplateKey, string>>;
   created_at: string;
 }
 
@@ -47,6 +53,8 @@ export interface Barber {
   tenant_id: string;
   name: string;
   commission: number;
+  start_hour: number | null;
+  end_hour: number | null;
   created_at: string;
 }
 
@@ -66,6 +74,7 @@ export interface Product {
   stock: number;
   min_stock: number;
   price: number;
+  cost: number;
   created_at: string;
 }
 

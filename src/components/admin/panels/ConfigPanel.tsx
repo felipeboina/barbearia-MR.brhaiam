@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { TextInput } from "@/components/ui/TextInput";
 import { DAYS_PT } from "@/lib/business/format";
-import { addBarber, addService, deleteBarber, deleteService, updateTenantConfig } from "@/lib/actions/admin";
+import { addBarber, addService, deleteBarber, deleteService, updateBarber, updateTenantConfig } from "@/lib/actions/admin";
 import type { AdminData } from "../AdminApp";
 import type { Tenant } from "@/lib/types";
 
@@ -114,10 +114,36 @@ export function ConfigPanel({ tenant, barbers, services }: AdminData) {
         <h3 className="text-sm uppercase tracking-wider text-muted mb-3 font-body">Barbeiros</h3>
         <div className="space-y-2 mb-4">
           {barbers.map((b) => (
-            <div key={b.id} className="flex items-center justify-between py-1.5 border-b border-line last:border-0">
+            <div key={b.id} className="flex items-center justify-between py-1.5 border-b border-line last:border-0 gap-2 flex-wrap">
               <span className="text-sm text-cream font-body">{b.name}</span>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-muted font-mono-receipt">{b.commission}% comissão</span>
+                <div className="flex items-center gap-1 text-xs text-muted font-body">
+                  <input
+                    type="number"
+                    defaultValue={b.start_hour ?? ""}
+                    placeholder="loja"
+                    onBlur={async (e) => {
+                      const v = e.target.value === "" ? null : Number(e.target.value);
+                      await updateBarber(b.id, { start_hour: v });
+                      router.refresh();
+                    }}
+                    className="w-14 rounded px-1.5 py-1 bg-ink border border-line text-cream text-xs"
+                  />
+                  <span>–</span>
+                  <input
+                    type="number"
+                    defaultValue={b.end_hour ?? ""}
+                    placeholder="loja"
+                    onBlur={async (e) => {
+                      const v = e.target.value === "" ? null : Number(e.target.value);
+                      await updateBarber(b.id, { end_hour: v });
+                      router.refresh();
+                    }}
+                    className="w-14 rounded px-1.5 py-1 bg-ink border border-line text-cream text-xs"
+                  />
+                  <span>h</span>
+                </div>
                 <button
                   onClick={async () => {
                     await deleteBarber(b.id);
@@ -131,6 +157,7 @@ export function ConfigPanel({ tenant, barbers, services }: AdminData) {
             </div>
           ))}
         </div>
+        <p className="text-xs text-muted mb-4 font-body">Horário individual (opcional) — deixe em branco pra usar o horário geral da loja.</p>
         <div className="flex gap-2">
           <TextInput placeholder="Nome" value={newBarber.name} onChange={(e) => setNewBarber((s) => ({ ...s, name: e.target.value }))} className="flex-1" />
           <TextInput

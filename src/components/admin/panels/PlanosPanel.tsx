@@ -214,7 +214,7 @@ export function PlanosPanel({ tenant, plans, clients, planSignups }: AdminData) 
               </div>
               <div className="flex gap-2">
                 <a
-                  href={waLink(client.phone, planReminderMessage(client, status, { shopName: tenant.shop_name }))}
+                  href={waLink(client.phone, planReminderMessage(client, status, tenant))}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="press-scale w-8 h-8 rounded-full flex items-center justify-center bg-whatsapp text-whatsapp-ink"
