@@ -37,6 +37,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# agent tooling (skills instalados via `npx skills add`, config local do Claude Code)
+.agents/
+.claude/
+skills-lock.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
