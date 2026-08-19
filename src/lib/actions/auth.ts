@@ -14,7 +14,12 @@ export async function signInTenant(_prevState: LoginState, formData: FormData): 
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: "E-mail ou senha incorretos." };
+  if (error) {
+    if (error.message.toLowerCase().includes("email not confirmed")) {
+      return { error: "Seu e-mail ainda não foi confirmado. Verifique a caixa de entrada (e o spam) do e-mail que você cadastrou." };
+    }
+    return { error: "E-mail ou senha incorretos." };
+  }
   if (!data.user) return { error: "Não deu pra entrar, tenta de novo." };
 
   const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("id", data.user.id).maybeSingle();
