@@ -10,7 +10,7 @@ export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   // Sem credenciais do Supabase configuradas (.env.local ainda vazio), pula a
   // renovação de sessão em vez de derrubar toda rota com 500 — permite ver as
