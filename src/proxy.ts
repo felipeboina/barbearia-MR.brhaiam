@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { toSessionCookieOptions } from "@/lib/supabase/session-cookie";
 
 /**
  * Renova a sessão do Supabase Auth em toda requisição (necessário pra Server
@@ -23,7 +24,7 @@ export async function proxy(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, toSessionCookieOptions(options)));
         },
       },
     });

@@ -17,9 +17,11 @@ import {
   ExternalLink,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 import type { Appointment, Barber, Block, Client, Plan, PlanSignup, Product, Service, Tenant, Transaction } from "@/lib/types";
 import { daysSince, isBirthdayToday } from "@/lib/business/format";
+import { signOutTenant } from "@/lib/actions/auth";
 import { DashboardPanel } from "./panels/DashboardPanel";
 import { AvulsoPanel } from "./panels/AvulsoPanel";
 import { AgendaPanel } from "./panels/AgendaPanel";
@@ -191,6 +193,9 @@ export function AdminApp(data: AdminData) {
         <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-muted smooth font-body">
           <ExternalLink size={15} /> Área do cliente
         </a>
+        <button onClick={() => signOutTenant()} className="flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-muted smooth font-body">
+          <LogOut size={15} /> Sair
+        </button>
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col">

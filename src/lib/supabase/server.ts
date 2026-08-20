@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { toSessionCookieOptions } from "./session-cookie";
 
 /**
  * Client Supabase para uso em Server Components / Server Actions, vinculado
@@ -16,7 +17,7 @@ export async function createSupabaseServerClient() {
       },
       setAll(cookiesToSet) {
         try {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, toSessionCookieOptions(options)));
         } catch {
           // chamado a partir de um Server Component (sem permissão de escrever
           // cookies) — o proxy.ts já cuida de renovar a sessão nesse caso.
