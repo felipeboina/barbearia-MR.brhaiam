@@ -54,12 +54,12 @@ export function ConfigPanel({ tenant, barbers, services }: AdminData) {
   };
 
   return (
-    <div className="anim-step max-w-3xl">
+    <div className="anim-step max-w-3xl mx-auto">
       <h1 className="text-2xl mb-6 font-heading text-cream">Configurações</h1>
 
       <Card className="mb-4">
         <h3 className="text-sm uppercase tracking-wider text-muted mb-3 font-body">Loja</h3>
-        <div className="grid grid-cols-2 gap-x-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3">
           <TextField label="Nome da loja" value={tenant.shop_name} onCommit={(v) => save({ shop_name: v })} />
           <NumberField label="Horário de abertura" value={tenant.open_hour} onCommit={(v) => save({ open_hour: v })} />
           <NumberField label="Horário de fechamento" value={tenant.close_hour} onCommit={(v) => save({ close_hour: v })} />
@@ -87,7 +87,7 @@ export function ConfigPanel({ tenant, barbers, services }: AdminData) {
 
       <Card className="mb-4">
         <h3 className="text-sm uppercase tracking-wider text-muted mb-3 font-body">PIX e contato</h3>
-        <div className="grid grid-cols-2 gap-x-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3">
           <TextField label="Chave PIX" value={tenant.pix_key} onCommit={(v) => save({ pix_key: v })} />
           <TextField label="Cidade (PIX)" value={tenant.pix_city} onCommit={(v) => save({ pix_city: v })} />
           <TextField label="WhatsApp da loja" value={tenant.shop_whatsapp} onCommit={(v) => save({ shop_whatsapp: v })} placeholder="(00) 00000-0000" />
@@ -96,7 +96,7 @@ export function ConfigPanel({ tenant, barbers, services }: AdminData) {
 
       <Card className="mb-4">
         <h3 className="text-sm uppercase tracking-wider text-muted mb-3 font-body">Automações e fidelidade</h3>
-        <div className="grid grid-cols-2 gap-x-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3">
           <NumberField label="Lembrete (horas antes)" value={tenant.reminder_hours} onCommit={(v) => save({ reminder_hours: v })} />
           <NumberField label="Desconto de aniversário (%)" value={tenant.birthday_discount} onCommit={(v) => save({ birthday_discount: v })} />
           <NumberField label="Limite de faltas (aviso)" value={tenant.no_show_threshold} onCommit={(v) => save({ no_show_threshold: v })} />

@@ -77,7 +77,7 @@ export function BlocksPanel({ barbers, blocks }: AdminData) {
   const upcoming = blocks.filter((b) => b.date >= todayStr()).sort((a, b) => a.date.localeCompare(b.date));
 
   return (
-    <div className="anim-step max-w-3xl grid md:grid-cols-2 gap-6">
+    <div className="anim-step max-w-3xl mx-auto grid md:grid-cols-2 gap-6">
       <div>
         <h1 className="text-2xl mb-6 font-heading text-cream">Bloqueios</h1>
         <Card>
@@ -101,7 +101,7 @@ export function BlocksPanel({ barbers, blocks }: AdminData) {
             </Select>
           </Field>
           {allDay ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="De">
                 <TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
               </Field>
@@ -114,7 +114,7 @@ export function BlocksPanel({ barbers, blocks }: AdminData) {
               <Field label="Data">
                 <TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
               </Field>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Início">
                   <TextInput type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
                 </Field>

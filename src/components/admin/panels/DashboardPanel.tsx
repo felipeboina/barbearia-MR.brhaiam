@@ -29,7 +29,7 @@ export function DashboardPanel({ tenant, appointments, transactions, barbers, se
   const nextAppt = todaysAppts.find((a) => a.status === "agendado" && minutesUntilAppt(a.date, a.time) >= 0);
 
   return (
-    <div className="anim-step max-w-5xl">
+    <div className="anim-step max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
         <h1 className="text-2xl font-heading text-cream">
           Visão geral · {weekdayPt(today)} {fmtDatePt(today)}

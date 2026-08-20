@@ -55,7 +55,7 @@ export function PlanosPanel({ tenant, plans, clients, planSignups }: AdminData) 
   };
 
   return (
-    <div className="anim-step max-w-3xl">
+    <div className="anim-step max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-heading text-cream flex items-center gap-2">
           <Crown size={22} className="text-brass" /> Planos
@@ -145,7 +145,7 @@ export function PlanosPanel({ tenant, plans, clients, planSignups }: AdminData) 
 
       <Card className="mb-6">
         <h3 className="text-sm uppercase tracking-wider text-muted mb-3 font-body">Novo plano</h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Nome">
             <TextInput value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
           </Field>

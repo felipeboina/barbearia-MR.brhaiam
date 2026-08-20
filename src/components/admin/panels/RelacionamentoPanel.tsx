@@ -40,7 +40,7 @@ export function RelacionamentoPanel({ tenant, clients, plans }: AdminData) {
     .sort((a, b) => daysSince(b.last_visit)! - daysSince(a.last_visit)!);
 
   return (
-    <div className="anim-step max-w-3xl">
+    <div className="anim-step max-w-3xl mx-auto">
       <h1 className="text-2xl mb-6 font-heading text-cream">Relacionamento</h1>
 
       <div className="flex flex-wrap gap-4 mb-8">

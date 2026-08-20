@@ -15,6 +15,8 @@ import {
   Send,
   Settings,
   ExternalLink,
+  Menu,
+  X,
 } from "lucide-react";
 import type { Appointment, Barber, Block, Client, Plan, PlanSignup, Product, Service, Tenant, Transaction } from "@/lib/types";
 import { daysSince, isBirthdayToday } from "@/lib/business/format";
@@ -132,16 +134,31 @@ function computeRelacionamentoBadge(data: AdminData) {
 
 export function AdminApp(data: AdminData) {
   const [tab, setTab] = useState<TabId>("dashboard");
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { tenant } = data;
   const relacionamentoBadge = computeRelacionamentoBadge(data);
 
   const badgeFor = (id: TabId): number => (id === "relacionamento" ? relacionamentoBadge : 0);
 
+  const selectTab = (id: TabId) => {
+    setTab(id);
+    setMobileOpen(false);
+  };
+
   return (
     <div className="flex min-h-screen">
-      <aside className="w-56 shrink-0 border-r border-line bg-panel p-3 flex flex-col gap-1 sticky top-0 h-screen overflow-y-auto">
-        <div className="px-2 py-3 mb-2">
+      {mobileOpen && <div className="fixed inset-0 bg-black/60 z-40 md:hidden" onClick={() => setMobileOpen(false)} />}
+
+      <aside
+        className={`w-64 md:w-56 shrink-0 border-r border-line bg-panel p-3 flex flex-col gap-1 fixed md:sticky top-0 h-screen overflow-y-auto z-50 smooth ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+        <div className="px-2 py-3 mb-2 flex items-center justify-between gap-2">
           <div className="text-sm font-semibold text-cream font-heading truncate">{tenant.shop_name}</div>
+          <button onClick={() => setMobileOpen(false)} className="text-muted md:hidden shrink-0" aria-label="Fechar menu">
+            <X size={18} />
+          </button>
         </div>
 
         {NAV_SECTIONS.map((section) => (
@@ -154,7 +171,7 @@ export function AdminApp(data: AdminData) {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setTab(item.id)}
+                  onClick={() => selectTab(item.id)}
                   className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm smooth text-left font-body"
                   style={{ background: active ? "var(--barber-red)" : "transparent", color: active ? "var(--cream)" : "var(--muted)" }}
                 >
@@ -176,20 +193,29 @@ export function AdminApp(data: AdminData) {
         </a>
       </aside>
 
-      <main className="flex-1 p-6 min-w-0">
-        {tab === "dashboard" && <DashboardPanel {...data} />}
-        {tab === "avulso" && <AvulsoPanel {...data} />}
-        {tab === "agenda" && <AgendaPanel {...data} />}
-        {tab === "confirmacoes" && <ConfirmacoesPanel {...data} />}
-        {tab === "clientes" && <ClientsPanel {...data} />}
-        {tab === "relacionamento" && <RelacionamentoPanel {...data} />}
-        {tab === "financeiro" && <FinanceiroPanel {...data} />}
-        {tab === "estoque" && <EstoquePanel {...data} />}
-        {tab === "planos" && <PlanosPanel {...data} />}
-        {tab === "bloqueios" && <BlocksPanel {...data} />}
-        {tab === "mensagens" && <MensagensPanel {...data} />}
-        {tab === "config" && <ConfigPanel {...data} />}
-      </main>
+      <div className="flex-1 min-w-0 flex flex-col">
+        <div className="md:hidden flex items-center gap-3 p-3 border-b border-line bg-panel sticky top-0 z-30">
+          <button onClick={() => setMobileOpen(true)} className="text-cream press-scale" aria-label="Abrir menu">
+            <Menu size={22} />
+          </button>
+          <span className="text-sm font-semibold text-cream font-heading truncate">{tenant.shop_name}</span>
+        </div>
+
+        <main className="flex-1 p-4 md:p-6 min-w-0">
+          {tab === "dashboard" && <DashboardPanel {...data} />}
+          {tab === "avulso" && <AvulsoPanel {...data} />}
+          {tab === "agenda" && <AgendaPanel {...data} />}
+          {tab === "confirmacoes" && <ConfirmacoesPanel {...data} />}
+          {tab === "clientes" && <ClientsPanel {...data} />}
+          {tab === "relacionamento" && <RelacionamentoPanel {...data} />}
+          {tab === "financeiro" && <FinanceiroPanel {...data} />}
+          {tab === "estoque" && <EstoquePanel {...data} />}
+          {tab === "planos" && <PlanosPanel {...data} />}
+          {tab === "bloqueios" && <BlocksPanel {...data} />}
+          {tab === "mensagens" && <MensagensPanel {...data} />}
+          {tab === "config" && <ConfigPanel {...data} />}
+        </main>
+      </div>
     </div>
   );
 }

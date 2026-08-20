@@ -104,7 +104,7 @@ export function FinanceiroPanel({ transactions, barbers }: AdminData) {
   };
 
   return (
-    <div className="anim-step max-w-4xl">
+    <div className="anim-step max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="text-2xl font-heading text-cream">Financeiro &amp; Gráficos</h1>
         <div className="flex items-center gap-2">

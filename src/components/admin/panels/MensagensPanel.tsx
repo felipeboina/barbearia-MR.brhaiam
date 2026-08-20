@@ -35,7 +35,7 @@ export function MensagensPanel({ tenant }: AdminData) {
   };
 
   return (
-    <div className="anim-step max-w-3xl">
+    <div className="anim-step max-w-3xl mx-auto">
       <h1 className="text-2xl mb-6 font-heading text-cream">Mensagens</h1>
 
       <Card className="mb-6">

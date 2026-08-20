@@ -54,14 +54,14 @@ export function AvulsoPanel({ clients, services, barbers }: AdminData) {
   };
 
   return (
-    <div className="anim-step max-w-2xl">
+    <div className="anim-step max-w-2xl mx-auto">
       <h1 className="text-2xl mb-6 font-heading text-cream">Atendimento Avulso</h1>
 
       <Card className="mb-6">
         <h3 className="text-sm uppercase tracking-wider text-muted mb-3 flex items-center gap-1.5 font-body">
           <Scissors size={14} /> Registrar corte feito agora
         </h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Nome do cliente">
             <TextInput value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
@@ -114,7 +114,7 @@ export function AvulsoPanel({ clients, services, barbers }: AdminData) {
         <h3 className="text-sm uppercase tracking-wider text-muted mb-3 flex items-center gap-1.5 font-body">
           <UserPlus size={14} /> Cadastrar cliente (sem agendar nada)
         </h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Nome">
             <TextInput value={clientName} onChange={(e) => setClientName(e.target.value)} />
           </Field>

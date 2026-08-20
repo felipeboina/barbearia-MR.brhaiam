@@ -85,7 +85,7 @@ export function ConfirmacoesPanel({ tenant, appointments, barbers, services }: A
   };
 
   return (
-    <div className="anim-step max-w-3xl">
+    <div className="anim-step max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-heading text-cream">Confirmações</h1>
         {notifStatus !== "unsupported" && notifStatus !== "granted" && (

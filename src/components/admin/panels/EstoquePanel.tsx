@@ -55,7 +55,7 @@ export function EstoquePanel({ products }: AdminData) {
   };
 
   return (
-    <div className="anim-step max-w-3xl">
+    <div className="anim-step max-w-3xl mx-auto">
       <h1 className="text-2xl mb-6 font-heading text-cream">Estoque</h1>
 
       {lowStock.length > 0 && (
@@ -117,7 +117,7 @@ export function EstoquePanel({ products }: AdminData) {
 
       <Card>
         <h3 className="text-sm uppercase tracking-wider text-muted mb-3 font-body">Novo produto</h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Nome">
             <TextInput value={newProduct.name} onChange={(e) => setNewProduct((s) => ({ ...s, name: e.target.value }))} />
           </Field>

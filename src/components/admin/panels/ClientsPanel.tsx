@@ -30,7 +30,7 @@ export function ClientsPanel({ tenant, clients, transactions, appointments, barb
   };
 
   return (
-    <div className="anim-step max-w-3xl">
+    <div className="anim-step max-w-3xl mx-auto">
       <h1 className="text-2xl mb-6 font-heading text-cream">Clientes</h1>
       <div className="relative mb-6">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />

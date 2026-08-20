@@ -29,7 +29,7 @@ export function AgendaPanel({ tenant, appointments, barbers, services, blocks, c
   };
 
   return (
-    <div className="anim-step max-w-3xl">
+    <div className="anim-step max-w-3xl mx-auto">
       <h1 className="text-2xl mb-6 font-heading text-cream">Agenda</h1>
 
       <div className="flex items-center gap-3 mb-6">
