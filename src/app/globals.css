@@ -65,9 +65,17 @@ body {
    dados e ficaria ilegível com uma imagem por trás.
 --------------------------------------------------------------- */
 .brand-bg {
+  position: relative;
+}
+.brand-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
   background-image: linear-gradient(180deg, rgba(5, 7, 13, 0.82), rgba(5, 7, 13, 0.95)), url("/background.jpg");
   background-size: cover;
-  background-position: center;
+  background-position: center top;
+  background-repeat: no-repeat;
 }
 
 /* ---------------------------------------------------------------
