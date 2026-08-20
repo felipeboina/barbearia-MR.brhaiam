@@ -1,10 +1,10 @@
 import type { AppointmentStatus } from "@/lib/types";
 
 const MAP: Record<AppointmentStatus, { bg: string; color: string; label: string }> = {
-  agendado: { bg: "#3a3020", color: "var(--brass)", label: "Agendado" },
-  concluido: { bg: "#1f3327", color: "#6fbf8f", label: "Concluído" },
-  cancelado: { bg: "#3a2320", color: "#d9695f", label: "Cancelado" },
-  falta: { bg: "#4a1f1f", color: "#ff8a7a", label: "Faltou" },
+  agendado: { bg: "var(--highlight-bg)", color: "var(--brass)", label: "Agendado" },
+  concluido: { bg: "var(--success-bg)", color: "var(--success)", label: "Concluído" },
+  cancelado: { bg: "var(--danger-bg)", color: "var(--danger)", label: "Cancelado" },
+  falta: { bg: "#2c1420", color: "var(--danger-light)", label: "Faltou" },
 };
 
 export function StatusPill({ status }: { status: AppointmentStatus }) {

@@ -3,10 +3,10 @@ import { ButtonHTMLAttributes } from "react";
 type Variant = "primary" | "brass" | "ghost" | "danger";
 
 const VARIANT_CLASSES: Record<Variant, string> = {
-  primary: "bg-barber-red text-cream shadow-[0_4px_14px_-4px_rgba(168,52,42,0.55)]",
-  brass: "bg-brass text-ink shadow-[0_4px_14px_-4px_rgba(198,155,59,0.45)]",
+  primary: "bg-barber-red text-cream shadow-[0_4px_14px_-4px_rgba(47,95,224,0.55)]",
+  brass: "bg-brass text-ink shadow-[0_4px_14px_-4px_rgba(204,214,234,0.4)]",
   ghost: "bg-transparent text-cream border border-line",
-  danger: "bg-transparent text-danger border border-[#6b3330]",
+  danger: "bg-transparent text-danger border border-[#5c2b34]",
 };
 
 export function Button({

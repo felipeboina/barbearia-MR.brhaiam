@@ -8,7 +8,7 @@ export function PixQrCode({ value, size = 180 }: { value: string; size?: number 
 
   useEffect(() => {
     let cancelled = false;
-    QRCode.toDataURL(value, { width: size, margin: 1, color: { dark: "#181410", light: "#F1E9DA" } })
+    QRCode.toDataURL(value, { width: size, margin: 1, color: { dark: "#05070d", light: "#EEF2F9" } })
       .then((url) => {
         if (!cancelled) setDataUrl(url);
       })

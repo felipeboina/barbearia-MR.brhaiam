@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Scissors } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { PoleStripe } from "@/components/ui/PoleStripe";
 import { getTheTenant } from "@/lib/current-tenant";
@@ -16,12 +16,10 @@ export default async function HomePage() {
 
   if (!tenant) {
     return (
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col brand-bg">
         <PoleStripe />
         <div className="flex-1 flex flex-col items-center justify-center px-4 text-center py-20">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mb-6 bg-barber-red">
-            <Scissors size={28} className="text-cream" />
-          </div>
+          <Image src="/logo.jpg" alt="Logo" width={72} height={72} className="rounded-full mb-6 shadow-lg" style={{ boxShadow: "0 4px 24px -4px rgba(47,95,224,0.5)" }} priority />
           <h1 className="text-3xl mb-4 font-heading text-cream">Sua barbearia ainda não foi configurada</h1>
           <p className="max-w-lg text-muted mb-8 font-body">Configure sua barbearia uma única vez — nome, e-mail e senha do painel do barbeiro.</p>
           <Link href="/setup">

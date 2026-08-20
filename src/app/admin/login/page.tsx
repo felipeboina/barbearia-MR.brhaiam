@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Scissors } from "lucide-react";
+import Image from "next/image";
 import { Card } from "@/components/ui/Card";
 import { LoginForm } from "@/components/marketing/LoginForm";
 import { getTheTenant } from "@/lib/current-tenant";
@@ -23,10 +23,8 @@ export default async function AdminLoginPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-4 py-16">
-      <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4 bg-barber-red">
-        <Scissors size={24} className="text-cream" />
-      </div>
+    <div className="flex-1 flex flex-col items-center justify-center px-4 py-16 brand-bg">
+      <Image src="/logo.jpg" alt="Logo" width={64} height={64} className="rounded-full mb-4" style={{ boxShadow: "0 4px 24px -4px rgba(47,95,224,0.5)" }} priority />
       <h1 className="text-xl mb-1 font-heading text-cream">{tenant.shop_name}</h1>
       <p className="text-sm text-muted mb-6 font-body">Painel do barbeiro</p>
       <Card className="max-w-sm w-full">

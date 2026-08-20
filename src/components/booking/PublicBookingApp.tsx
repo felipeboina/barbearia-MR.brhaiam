@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Clock, MapPin, Scissors, Sparkles } from "lucide-react";
+import Image from "next/image";
+import { Check, Clock, MapPin, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PoleStripe } from "@/components/ui/PoleStripe";
@@ -103,12 +104,18 @@ export function PublicBookingApp({
 
   // Hero
   return (
-    <div className="anim-fadein">
+    <div className="anim-fadein brand-bg">
       <PoleStripe />
       <div className="max-w-md mx-auto px-4 pb-16 pt-10 text-center relative">
-        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 bg-barber-red">
-          <Scissors size={26} className="text-cream" />
-        </div>
+        <Image
+          src="/logo.jpg"
+          alt={tenant.shop_name}
+          width={80}
+          height={80}
+          className="rounded-full mx-auto mb-5"
+          style={{ boxShadow: "0 4px 24px -4px rgba(47,95,224,0.5)" }}
+          priority
+        />
         <h1 className="text-3xl mb-2 font-heading text-cream">{tenant.shop_name}</h1>
         <p className="text-sm text-muted mb-8 font-body flex items-center justify-center gap-1.5">
           <Clock size={13} /> {tenant.open_hour}h às {tenant.close_hour}h · {formatWorkDays(tenant.work_days)}

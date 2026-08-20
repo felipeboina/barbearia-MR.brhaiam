@@ -277,14 +277,14 @@ export function FinanceiroPanel({ transactions, barbers }: AdminData) {
         <div style={{ width: "100%", height: 300 }}>
           <ResponsiveContainer>
             <AreaChart data={monthly}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#382F25" />
-              <XAxis dataKey="label" stroke="#8C8175" fontSize={12} />
-              <YAxis stroke="#8C8175" fontSize={12} />
-              <Tooltip contentStyle={{ background: "#241E17", border: "1px solid #382F25", color: "#F1E9DA" }} formatter={(v) => fmtMoney(Number(v))} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+              <XAxis dataKey="label" stroke="var(--muted)" fontSize={12} />
+              <YAxis stroke="var(--muted)" fontSize={12} />
+              <Tooltip contentStyle={{ background: "var(--panel)", border: "1px solid var(--line)", color: "var(--cream)" }} formatter={(v) => fmtMoney(Number(v))} />
               <Legend />
-              <Area type="monotone" dataKey="receita" name="Receita" stroke="#6fbf8f" fill="#6fbf8f" fillOpacity={0.15} />
-              <Area type="monotone" dataKey="gastos" name="Gastos" stroke="#d9695f" fill="#d9695f" fillOpacity={0.15} />
-              <Area type="monotone" dataKey="lucro" name="Lucro" stroke="#C69B3B" fill="#C69B3B" fillOpacity={0.2} />
+              <Area type="monotone" dataKey="receita" name="Receita" stroke="var(--success)" fill="var(--success)" fillOpacity={0.15} />
+              <Area type="monotone" dataKey="gastos" name="Gastos" stroke="var(--danger)" fill="var(--danger)" fillOpacity={0.15} />
+              <Area type="monotone" dataKey="lucro" name="Lucro" stroke="var(--brass)" fill="var(--brass)" fillOpacity={0.2} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

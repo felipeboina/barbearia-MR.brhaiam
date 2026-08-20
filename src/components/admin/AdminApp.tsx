@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   Scissors,
   Zap,
@@ -157,7 +158,10 @@ export function AdminApp(data: AdminData) {
         }`}
       >
         <div className="px-2 py-3 mb-2 flex items-center justify-between gap-2">
-          <div className="text-sm font-semibold text-cream font-heading truncate">{tenant.shop_name}</div>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Image src="/logo.jpg" alt="" width={32} height={32} className="rounded-full shrink-0" />
+            <div className="text-sm font-semibold text-cream font-heading truncate">{tenant.shop_name}</div>
+          </div>
           <button onClick={() => setMobileOpen(false)} className="text-muted md:hidden shrink-0" aria-label="Fechar menu">
             <X size={18} />
           </button>
@@ -203,6 +207,7 @@ export function AdminApp(data: AdminData) {
           <button onClick={() => setMobileOpen(true)} className="text-cream press-scale" aria-label="Abrir menu">
             <Menu size={22} />
           </button>
+          <Image src="/logo.jpg" alt="" width={26} height={26} className="rounded-full shrink-0" />
           <span className="text-sm font-semibold text-cream font-heading truncate">{tenant.shop_name}</span>
         </div>
 
