@@ -19,10 +19,12 @@ import {
   Menu,
   X,
   LogOut,
+  Lock,
 } from "lucide-react";
 import type { Appointment, Barber, Block, Client, Plan, PlanSignup, Product, Service, Tenant, Transaction } from "@/lib/types";
 import { daysSince, isBirthdayToday } from "@/lib/business/format";
 import { signOutTenant } from "@/lib/actions/auth";
+import { FinancialPinModal } from "./FinancialPinModal";
 import { DashboardPanel } from "./panels/DashboardPanel";
 import { AvulsoPanel } from "./panels/AvulsoPanel";
 import { AgendaPanel } from "./panels/AgendaPanel";
@@ -135,17 +137,25 @@ function computeRelacionamentoBadge(data: AdminData) {
   return loyaltyReady + birthdayPending + inactivePending + earlyPending;
 }
 
-export function AdminApp(data: AdminData) {
+export function AdminApp(data: AdminData & { financialPinSet: boolean }) {
+  const { financialPinSet, ...adminData } = data;
   const [tab, setTab] = useState<TabId>("dashboard");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { tenant } = data;
-  const relacionamentoBadge = computeRelacionamentoBadge(data);
+  const [financialUnlocked, setFinancialUnlocked] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const { tenant } = adminData;
+  const relacionamentoBadge = computeRelacionamentoBadge(adminData);
+  const financialLocked = financialPinSet && !financialUnlocked;
 
   const badgeFor = (id: TabId): number => (id === "relacionamento" ? relacionamentoBadge : 0);
 
   const selectTab = (id: TabId) => {
-    setTab(id);
     setMobileOpen(false);
+    if (id === "financeiro" && financialLocked) {
+      setShowPinModal(true);
+      return;
+    }
+    setTab(id);
   };
 
   return (
@@ -183,6 +193,7 @@ export function AdminApp(data: AdminData) {
                 >
                   <Icon size={16} className="shrink-0" />
                   <span className="flex-1 truncate">{item.label}</span>
+                  {item.id === "financeiro" && financialLocked && <Lock size={12} className="shrink-0 text-muted" />}
                   {badge > 0 && (
                     <span className="text-[10px] min-w-[18px] text-center px-1 py-0.5 rounded-full bg-barber-red text-cream font-body">{badge}</span>
                   )}
@@ -212,20 +223,31 @@ export function AdminApp(data: AdminData) {
         </div>
 
         <main className="flex-1 p-4 md:p-6 min-w-0">
-          {tab === "dashboard" && <DashboardPanel {...data} />}
-          {tab === "avulso" && <AvulsoPanel {...data} />}
-          {tab === "agenda" && <AgendaPanel {...data} />}
-          {tab === "confirmacoes" && <ConfirmacoesPanel {...data} />}
-          {tab === "clientes" && <ClientsPanel {...data} />}
-          {tab === "relacionamento" && <RelacionamentoPanel {...data} />}
-          {tab === "financeiro" && <FinanceiroPanel {...data} />}
-          {tab === "estoque" && <EstoquePanel {...data} />}
-          {tab === "planos" && <PlanosPanel {...data} />}
-          {tab === "bloqueios" && <BlocksPanel {...data} />}
-          {tab === "mensagens" && <MensagensPanel {...data} />}
-          {tab === "config" && <ConfigPanel {...data} />}
+          {tab === "dashboard" && <DashboardPanel {...adminData} />}
+          {tab === "avulso" && <AvulsoPanel {...adminData} />}
+          {tab === "agenda" && <AgendaPanel {...adminData} />}
+          {tab === "confirmacoes" && <ConfirmacoesPanel {...adminData} />}
+          {tab === "clientes" && <ClientsPanel {...adminData} />}
+          {tab === "relacionamento" && <RelacionamentoPanel {...adminData} />}
+          {tab === "financeiro" && !financialLocked && <FinanceiroPanel {...adminData} />}
+          {tab === "estoque" && <EstoquePanel {...adminData} />}
+          {tab === "planos" && <PlanosPanel {...adminData} />}
+          {tab === "bloqueios" && <BlocksPanel {...adminData} />}
+          {tab === "mensagens" && <MensagensPanel {...adminData} />}
+          {tab === "config" && <ConfigPanel {...adminData} financialPinSet={financialPinSet} />}
         </main>
       </div>
+
+      {showPinModal && (
+        <FinancialPinModal
+          onCancel={() => setShowPinModal(false)}
+          onSuccess={() => {
+            setFinancialUnlocked(true);
+            setShowPinModal(false);
+            setTab("financeiro");
+          }}
+        />
+      )}
     </div>
   );
 }

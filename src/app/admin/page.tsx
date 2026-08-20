@@ -21,6 +21,7 @@ export default async function AdminPage() {
     { data: blocks },
     { data: plans },
     { data: planSignups },
+    { data: pinRow },
   ] = await Promise.all([
     supabase.from("barbers").select("*").eq("tenant_id", tenant.id).order("name"),
     supabase.from("services").select("*").eq("tenant_id", tenant.id).order("name"),
@@ -31,6 +32,7 @@ export default async function AdminPage() {
     supabase.from("blocks").select("*").eq("tenant_id", tenant.id).order("date"),
     supabase.from("plans").select("*").eq("tenant_id", tenant.id).order("price"),
     supabase.from("plan_signups").select("*").eq("tenant_id", tenant.id).eq("status", "pendente"),
+    supabase.from("tenants").select("financial_pin").eq("id", tenant.id).maybeSingle(),
   ]);
 
   return (
@@ -45,6 +47,7 @@ export default async function AdminPage() {
       blocks={(blocks as Block[]) || []}
       plans={(plans as Plan[]) || []}
       planSignups={(planSignups as PlanSignup[]) || []}
+      financialPinSet={!!pinRow?.financial_pin}
     />
   );
 }

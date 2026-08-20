@@ -15,7 +15,14 @@ export async function getTheTenant(): Promise<Tenant | null> {
 
   const supabase = createSupabaseAdminClient();
   const { data } = await supabase.from("tenants").select("*").limit(1).maybeSingle();
-  return data as Tenant | null;
+  if (!data) return null;
+  // financial_pin nunca deve chegar num componente client — removido aqui,
+  // no único ponto de onde o tenant é lido pro resto do app. As actions que
+  // precisam checar/definir a senha (src/lib/actions/admin.ts) fazem sua
+  // própria query direta nessa coluna e só devolvem boolean/void.
+  const safe = { ...(data as Tenant & { financial_pin: string | null }) };
+  delete (safe as { financial_pin?: string | null }).financial_pin;
+  return safe;
 }
 
 /**

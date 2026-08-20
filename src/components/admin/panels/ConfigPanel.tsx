@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Shield, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { TextInput } from "@/components/ui/TextInput";
 import { DAYS_PT } from "@/lib/business/format";
-import { addBarber, addService, deleteBarber, deleteService, updateBarber, updateTenantConfig } from "@/lib/actions/admin";
+import { addBarber, addService, deleteBarber, deleteService, setFinancialPin, updateBarber, updateTenantConfig } from "@/lib/actions/admin";
 import type { AdminData } from "../AdminApp";
 import type { Tenant } from "@/lib/types";
 
@@ -38,10 +38,12 @@ function TextField({ label, value, onCommit, placeholder }: { label: string; val
   );
 }
 
-export function ConfigPanel({ tenant, barbers, services }: AdminData) {
+export function ConfigPanel({ tenant, barbers, services, financialPinSet }: AdminData & { financialPinSet: boolean }) {
   const router = useRouter();
   const [newBarber, setNewBarber] = useState({ name: "", commission: "40" });
   const [newService, setNewService] = useState({ name: "", price: "", duration: "30" });
+  const [pinInput, setPinInput] = useState("");
+  const [pinSubmitting, setPinSubmitting] = useState(false);
 
   const save = async (patch: Partial<Tenant>) => {
     await updateTenantConfig(patch as Record<string, unknown>);
@@ -107,6 +109,46 @@ export function ConfigPanel({ tenant, barbers, services }: AdminData) {
           <TextField label="Recompensa de fidelidade" value={tenant.loyalty_reward} onCommit={(v) => save({ loyalty_reward: v })} />
           <NumberField label="Desconto de indicação (%)" value={tenant.referral_discount} onCommit={(v) => save({ referral_discount: v })} />
           <NumberField label="Aviso de vencimento de plano (dias)" value={tenant.plan_expiry_reminder_days} onCommit={(v) => save({ plan_expiry_reminder_days: v })} />
+        </div>
+      </Card>
+
+      <Card className="mb-4">
+        <h3 className="text-sm uppercase tracking-wider text-muted mb-3 flex items-center gap-1.5 font-body">
+          <Shield size={14} /> Segurança
+        </h3>
+        <p className="text-xs text-muted mb-3 font-body">
+          {financialPinSet
+            ? "A aba Financeiro & Gráficos está protegida por uma senha extra."
+            : "Defina uma senha extra pra proteger a aba Financeiro & Gráficos — útil se outras pessoas usam esse painel no dia a dia e você não quer que vejam os números."}
+        </p>
+        <div className="flex gap-2 items-end flex-wrap">
+          <Field label={financialPinSet ? "Nova senha (deixe em branco pra manter)" : "Senha do Financeiro"}>
+            <TextInput type="password" value={pinInput} onChange={(e) => setPinInput(e.target.value)} placeholder="mínimo 4 caracteres" className="w-56" />
+          </Field>
+          <Button
+            variant="brass"
+            disabled={pinSubmitting || pinInput.trim().length < 4}
+            onClick={async () => {
+              setPinSubmitting(true);
+              await setFinancialPin(pinInput);
+              setPinInput("");
+              setPinSubmitting(false);
+              router.refresh();
+            }}
+          >
+            Salvar
+          </Button>
+          {financialPinSet && (
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                await setFinancialPin(null);
+                router.refresh();
+              }}
+            >
+              Remover proteção
+            </Button>
+          )}
         </div>
       </Card>
 

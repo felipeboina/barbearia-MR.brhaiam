@@ -383,4 +383,34 @@ export async function registerClient(input: RegisterClientInput): Promise<{ ok: 
   return { ok: true };
 }
 
+// ---------------------------------------------------------------- senha do financeiro
+
+/**
+ * Senha extra (opcional) só pra aba Financeiro & Gráficos — separada do
+ * login principal, pra quando outras pessoas usam o painel no dia a dia
+ * mas não devem ver números financeiros. O valor da senha nunca sai do
+ * servidor: essas três funções fazem sua própria query direta na coluna
+ * `financial_pin` e só devolvem boolean/void, nunca o texto da senha.
+ */
+export async function hasFinancialPin(): Promise<boolean> {
+  const { supabase, tenantId } = await getSessionClientAndTenant();
+  const { data } = await supabase.from("tenants").select("financial_pin").eq("id", tenantId).maybeSingle();
+  return !!data?.financial_pin;
+}
+
+export async function checkFinancialPin(pin: string): Promise<boolean> {
+  const { supabase, tenantId } = await getSessionClientAndTenant();
+  const { data } = await supabase.from("tenants").select("financial_pin").eq("id", tenantId).maybeSingle();
+  if (!data?.financial_pin) return true;
+  return data.financial_pin === pin;
+}
+
+export async function setFinancialPin(pin: string | null): Promise<void> {
+  const { supabase, tenantId } = await getSessionClientAndTenant();
+  await supabase
+    .from("tenants")
+    .update({ financial_pin: pin && pin.trim().length > 0 ? pin.trim() : null })
+    .eq("id", tenantId);
+}
+
 export type { AppointmentProductItem };
