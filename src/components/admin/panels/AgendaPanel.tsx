@@ -75,11 +75,12 @@ export function AgendaPanel({ tenant, appointments, barbers, services, blocks, c
       <div className="space-y-3">
         {dayAppts.map((a) => {
           const service = services.find((s) => s.id === a.service_id);
+          const extraServices = services.filter((s) => a.extra_service_ids?.includes(s.id));
           const barber = barbers.find((b) => b.id === a.barber_id);
           const canNoShow = a.status === "agendado" && minutesUntilAppt(a.date, a.time) < 0;
           return (
             <div key={a.id}>
-              <TicketCard appt={a} service={service} barber={barber}>
+              <TicketCard appt={a} service={service} extraServices={extraServices} barber={barber}>
                 {a.status === "agendado" && (
                   <>
                     <button onClick={() => setCompletingId(completingId === a.id ? null : a.id)} className="press-scale text-success" title="Concluir">
@@ -107,6 +108,7 @@ export function AgendaPanel({ tenant, appointments, barbers, services, blocks, c
                 <PaymentPicker
                   appt={a}
                   service={service}
+                  extraServices={extraServices}
                   tenant={tenant}
                   clients={clients}
                   onDone={() => {
@@ -128,6 +130,7 @@ export function AgendaPanel({ tenant, appointments, barbers, services, blocks, c
 function PaymentPicker({
   appt,
   service,
+  extraServices,
   tenant,
   clients,
   onDone,
@@ -135,6 +138,7 @@ function PaymentPicker({
 }: {
   appt: Appointment;
   service: AdminData["services"][number] | undefined;
+  extraServices: AdminData["services"];
   tenant: AdminData["tenant"];
   clients: AdminData["clients"];
   onDone: () => void;
@@ -145,7 +149,14 @@ function PaymentPicker({
   const [copied, setCopied] = useState(false);
 
   const clientRecord = clients.find((c) => c.phone === appt.phone) || null;
-  const priceInfo = useMemo(() => computeFinalPrice({ referred_by_phone: appt.referred_by_phone, phone: appt.phone }, service, clientRecord, tenant.referral_discount), [appt, service, clientRecord, tenant.referral_discount]);
+  // soma o preço do serviço principal + extras — precisa bater com o que
+  // complete_appointment() calcula no banco, senão o "valor a cobrar"
+  // mostrado aqui fica errado pra agendamentos com mais de um serviço.
+  const basePrice = (service?.price || 0) + extraServices.reduce((s, it) => s + it.price, 0);
+  const priceInfo = useMemo(
+    () => computeFinalPrice({ referred_by_phone: appt.referred_by_phone, phone: appt.phone }, { price: basePrice }, clientRecord, tenant.referral_discount),
+    [appt, basePrice, clientRecord, tenant.referral_discount]
+  );
 
   const pixPayload =
     method === "pix" && tenant.pix_key

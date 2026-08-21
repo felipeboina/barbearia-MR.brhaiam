@@ -34,7 +34,7 @@ export function ConfirmacoesPanel({ tenant, appointments, barbers, services }: A
   })();
 
   const row = (a: (typeof upcoming)[number]) => {
-    const service = services.find((s) => s.id === a.service_id);
+    const serviceNames = services.filter((s) => s.id === a.service_id || a.extra_service_ids?.includes(s.id)).map((s) => s.name);
     const barber = barbers.find((b) => b.id === a.barber_id);
     const badge = a.date === todayStr() ? "Hoje" : a.date === tomorrow ? "Amanhã" : fmtDatePt(a.date);
     return (
@@ -51,7 +51,7 @@ export function ConfirmacoesPanel({ tenant, appointments, barbers, services }: A
           </div>
           <div className="text-sm text-cream font-body">{a.client_name}</div>
           <div className="text-xs text-muted font-body">
-            {service?.name} · {barber?.name}
+            {serviceNames.join(" + ")} · {barber?.name}
           </div>
         </div>
         <div className="flex items-center gap-2">

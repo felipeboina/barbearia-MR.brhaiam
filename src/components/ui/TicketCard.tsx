@@ -7,17 +7,20 @@ import { StatusPill } from "./StatusPill";
 export function TicketCard({
   appt,
   service,
+  extraServices,
   barber,
   children,
 }: {
   appt: Appointment;
   service: Service | null | undefined;
+  extraServices?: Service[];
   barber: Barber | null | undefined;
   children?: React.ReactNode;
 }) {
   const duration = appt.duration_min || service?.duration;
   const time = appt.time.slice(0, 5);
   const endTime = duration ? fromMin(toMin(time) + duration) : null;
+  const serviceLabel = [service, ...(extraServices || [])].filter((s): s is Service => !!s).map((s) => s.name).join(" + ");
 
   return (
     <div className="relative rounded-md p-4 pl-5 smooth hover-lift anim-pop bg-panel border border-line" style={{ borderLeft: "3px dashed var(--brass)" }}>
@@ -37,7 +40,7 @@ export function TicketCard({
           </div>
           <div className="font-semibold text-cream font-body">{appt.client_name}</div>
           <div className="text-sm text-muted">
-            {service?.name || "—"} · {barber?.name || "—"}
+            {serviceLabel || "—"} · {barber?.name || "—"}
           </div>
           {appt.products?.length > 0 && (
             <div className="text-xs mt-1 flex items-center gap-1 text-brass">

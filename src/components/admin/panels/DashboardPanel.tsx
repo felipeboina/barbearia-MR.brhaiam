@@ -105,7 +105,13 @@ export function DashboardPanel({ tenant, appointments, transactions, barbers, se
       <h2 className="text-sm uppercase tracking-wider text-muted mb-3 font-body">Agenda de hoje</h2>
       <div className="space-y-3">
         {todaysAppts.map((a) => (
-          <TicketCard key={a.id} appt={a} service={services.find((s) => s.id === a.service_id)} barber={barbers.find((b) => b.id === a.barber_id)} />
+          <TicketCard
+            key={a.id}
+            appt={a}
+            service={services.find((s) => s.id === a.service_id)}
+            extraServices={services.filter((s) => a.extra_service_ids?.includes(s.id))}
+            barber={barbers.find((b) => b.id === a.barber_id)}
+          />
         ))}
         {todaysAppts.length === 0 && <p className="text-muted font-body">Nenhum agendamento para hoje.</p>}
       </div>

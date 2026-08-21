@@ -55,6 +55,7 @@ export interface BookAppointmentInput {
   birthday: string | null;
   barberId: string;
   serviceId: string;
+  extraServiceIds: string[];
   date: string;
   time: string;
   duration: number;
@@ -110,6 +111,7 @@ export async function bookAppointment(input: BookAppointmentInput): Promise<{ ok
     birthday: input.birthday,
     barber_id: input.barberId,
     service_id: input.serviceId,
+    extra_service_ids: input.extraServiceIds,
     date: input.date,
     time: input.time,
     duration_min: input.duration,

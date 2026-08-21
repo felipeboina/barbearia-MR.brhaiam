@@ -37,7 +37,7 @@ export function BookingWizard({
   onDone: (info: DoneInfo) => void;
 }) {
   const [step, setStep] = useState(1);
-  const [serviceId, setServiceId] = useState<string | null>(null);
+  const [serviceIds, setServiceIds] = useState<string[]>([]);
   const [barberId, setBarberId] = useState<string | null>(null);
   const [date, setDate] = useState(todayStr());
   const [time, setTime] = useState<string | null>(null);
@@ -61,15 +61,21 @@ export function BookingWizard({
   });
   const [slotsLoading, setSlotsLoading] = useState(false);
 
-  const service = services.find((s) => s.id === serviceId) || null;
+  const selectedServices = useMemo(() => services.filter((s) => serviceIds.includes(s.id)), [services, serviceIds]);
+  const totalDuration = selectedServices.reduce((s, it) => s + it.duration, 0);
+  const totalServicePrice = selectedServices.reduce((s, it) => s + it.price, 0);
   const barber = barbers.find((b) => b.id === barberId) || null;
 
+  const toggleService = (id: string) => {
+    setServiceIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  };
+
   useEffect(() => {
-    if (!barberId || !service) return;
+    if (!barberId || selectedServices.length === 0) return;
     let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- indicador de carregamento p/ fetch disparado por mudança de dependência
     setSlotsLoading(true);
-    getSlots(barberId, date, service.duration).then((res) => {
+    getSlots(barberId, date, totalDuration).then((res) => {
       if (!cancelled) {
         setSlotState(res);
         setSlotsLoading(false);
@@ -78,7 +84,7 @@ export function BookingWizard({
     return () => {
       cancelled = true;
     };
-  }, [barberId, date, service?.duration, service]);
+  }, [barberId, date, totalDuration, selectedServices.length]);
 
   const phoneDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -115,7 +121,7 @@ export function BookingWizard({
     [cart, products]
   );
   const addonsTotal = cartItems.reduce((s, it) => s + it.product.price * it.qty, 0);
-  const grandTotal = (service?.price || 0) + addonsTotal;
+  const grandTotal = totalServicePrice + addonsTotal;
 
   const canConfirm = name.trim().length >= 2 && phone.trim().length >= 8;
 
@@ -125,7 +131,8 @@ export function BookingWizard({
       : null;
 
   const confirm = async () => {
-    if (!canConfirm || !service || !barber || !time) return;
+    if (!canConfirm || selectedServices.length === 0 || !barber || !time) return;
+    const [primaryService, ...extraServices] = selectedServices;
     setSubmitting(true);
     setSubmitError(null);
     const res = await bookAppointment({
@@ -133,10 +140,11 @@ export function BookingWizard({
       phone,
       birthday: birthday || null,
       barberId: barber.id,
-      serviceId: service.id,
+      serviceId: primaryService.id,
+      extraServiceIds: extraServices.map((s) => s.id),
       date,
       time,
-      duration: service.duration,
+      duration: totalDuration,
       products: cartItems.map((it) => ({ productId: it.product.id, name: it.product.name, price: it.product.price, qty: it.qty })),
       addonsTotal,
       totalValue: grandTotal,
@@ -149,7 +157,7 @@ export function BookingWizard({
       setSubmitError(res.error);
       return;
     }
-    onDone({ clientName: name.trim(), date, time, serviceName: service.name, barberName: barber.name });
+    onDone({ clientName: name.trim(), date, time, serviceName: selectedServices.map((s) => s.name).join(" + "), barberName: barber.name });
   };
 
   return (
@@ -169,28 +177,44 @@ export function BookingWizard({
 
       {step === 1 && (
         <div className="anim-step">
-          <h2 className="text-xl mb-4 font-heading text-cream">Escolha o serviço</h2>
-          <div className="space-y-2">
-            {services.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => {
-                  setServiceId(s.id);
-                  setStep(2);
-                }}
-                className="w-full text-left"
-              >
-                <Card lift className="flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-cream font-body">{s.name}</div>
-                    <div className="text-xs text-muted font-body">{fmtDuration(s.duration)}</div>
-                  </div>
-                  <div className="text-brass font-mono-receipt font-bold">{fmtMoney(s.price)}</div>
-                </Card>
-              </button>
-            ))}
+          <h2 className="text-xl mb-1 font-heading text-cream">Escolha o serviço</h2>
+          <p className="text-xs text-muted mb-4 font-body">Pode escolher mais de um.</p>
+          <div className="space-y-2 mb-4">
+            {services.map((s) => {
+              const selected = serviceIds.includes(s.id);
+              return (
+                <button key={s.id} onClick={() => toggleService(s.id)} className="w-full text-left">
+                  <Card lift className="flex items-center justify-between" style={{ borderColor: selected ? "var(--brass)" : undefined }}>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-5 h-5 rounded border flex items-center justify-center shrink-0 smooth"
+                        style={{ borderColor: selected ? "var(--brass)" : "var(--line)", background: selected ? "var(--brass)" : "transparent" }}
+                      >
+                        {selected && <Check size={13} className="text-ink" />}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-cream font-body">{s.name}</div>
+                        <div className="text-xs text-muted font-body">{fmtDuration(s.duration)}</div>
+                      </div>
+                    </div>
+                    <div className="text-brass font-mono-receipt font-bold">{fmtMoney(s.price)}</div>
+                  </Card>
+                </button>
+              );
+            })}
             {services.length === 0 && <p className="text-muted font-body">Nenhum serviço cadastrado ainda.</p>}
           </div>
+          {selectedServices.length > 0 && (
+            <div className="flex items-center justify-between mb-4 px-1">
+              <span className="text-sm text-muted font-body">
+                {fmtDuration(totalDuration)} · {selectedServices.length} serviço{selectedServices.length > 1 ? "s" : ""}
+              </span>
+              <span className="text-lg font-bold text-brass font-mono-receipt">{fmtMoney(totalServicePrice)}</span>
+            </div>
+          )}
+          <Button variant="primary" className="w-full" disabled={selectedServices.length === 0} onClick={() => setStep(2)}>
+            Continuar
+          </Button>
         </div>
       )}
 

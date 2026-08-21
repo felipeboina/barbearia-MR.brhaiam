@@ -131,6 +131,7 @@ export interface Appointment {
   birthday: string | null;
   barber_id: string;
   service_id: string;
+  extra_service_ids: string[];
   date: string; // YYYY-MM-DD
   time: string; // HH:MM:SS (postgres time) ou HH:MM
   duration_min: number;
