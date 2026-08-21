@@ -22,11 +22,18 @@ async function getSessionClientAndTenant() {
 
 // ---------------------------------------------------------------- agenda
 
-export async function completeAppointment(apptId: string, paymentMethod: string) {
-  const { supabase } = await getSessionClientAndTenant();
-  const { error } = await supabase.rpc("complete_appointment", { p_appt_id: apptId, p_payment_method: paymentMethod });
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
+export async function completeAppointment(apptId: string, paymentMethod: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  // Nunca deixa essa action lançar — se sessão/tenant falhar (ex: token
+  // expirado no meio do uso), o botão no client ficaria girando pra sempre
+  // esperando um await que nunca resolve, em vez de mostrar um erro.
+  try {
+    const { supabase } = await getSessionClientAndTenant();
+    const { error } = await supabase.rpc("complete_appointment", { p_appt_id: apptId, p_payment_method: paymentMethod });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Não deu pra concluir o atendimento, tenta de novo." };
+  }
 }
 
 export async function cancelAppointment(apptId: string) {

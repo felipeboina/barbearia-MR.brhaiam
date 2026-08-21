@@ -207,6 +207,8 @@ export const BLOCK_REASONS = [
 export const PAYMENT_METHODS = [
   { id: "pix", label: "PIX" },
   { id: "dinheiro", label: "Dinheiro" },
+  { id: "debito", label: "Débito" },
+  { id: "credito", label: "Crédito" },
 ] as const;
 
 export const INCOME_CATEGORIES = [

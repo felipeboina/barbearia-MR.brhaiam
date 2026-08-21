@@ -147,6 +147,7 @@ function PaymentPicker({
   const [method, setMethod] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const clientRecord = clients.find((c) => c.phone === appt.phone) || null;
   // soma o preço do serviço principal + extras — precisa bater com o que
@@ -164,11 +165,22 @@ function PaymentPicker({
       : null;
 
   const confirm = async () => {
-    if (!method) return;
+    if (!method || submitting) return;
     setSubmitting(true);
-    const res = await completeAppointment(appt.id, method);
-    setSubmitting(false);
-    if (res.ok) onDone();
+    setError(null);
+    try {
+      const res = await completeAppointment(appt.id, method);
+      if (res.ok) {
+        onDone();
+      } else {
+        setError(res.error);
+      }
+    } catch {
+      // rede caiu, sessão expirou etc. — nunca deixa o botão girando pra sempre
+      setError("Não deu pra concluir o atendimento. Verifique sua conexão e tenta de novo.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -180,12 +192,12 @@ function PaymentPicker({
           {priceInfo.discountPct > 0 && <div className="text-xs text-success font-body">{priceInfo.reason}</div>}
         </div>
       </div>
-      <div className="flex gap-2 mb-3">
+      <div className="grid grid-cols-2 gap-2 mb-3">
         {PAYMENT_METHODS.map((m) => (
           <button
             key={m.id}
             onClick={() => setMethod(m.id)}
-            className="flex-1 press-scale rounded-md py-2 text-sm font-body border smooth"
+            className="press-scale rounded-md py-2 text-sm font-body border smooth"
             style={{ borderColor: method === m.id ? "var(--brass)" : "var(--line)", color: "var(--cream)" }}
           >
             {m.label}
@@ -210,6 +222,8 @@ function PaymentPicker({
           </button>
         </div>
       )}
+      {error && <p className="text-sm text-danger mb-3 font-body">{error}</p>}
+
       <div className="flex gap-2">
         <Button variant="ghost" className="flex-1" onClick={onCancel}>
           Cancelar
