@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   Scissors,
@@ -22,7 +22,7 @@ import {
   Lock,
 } from "lucide-react";
 import type { Appointment, Barber, Block, Client, Plan, PlanSignup, Product, Service, Tenant, Transaction } from "@/lib/types";
-import { daysSince, isBirthdayToday } from "@/lib/business/format";
+import { daysSince, isBirthdayToday, minutesUntilAppt } from "@/lib/business/format";
 import { signOutTenant } from "@/lib/actions/auth";
 import { FinancialPinModal } from "./FinancialPinModal";
 import { DashboardPanel } from "./panels/DashboardPanel";
@@ -137,23 +137,75 @@ function computeRelacionamentoBadge(data: AdminData) {
   return loyaltyReady + birthdayPending + inactivePending + earlyPending;
 }
 
+function computeConfirmacoesBadge(data: AdminData) {
+  return data.appointments.filter((a) => {
+    if (a.status !== "agendado" || a.confirmed === true) return false;
+    const mins = minutesUntilAppt(a.date, a.time);
+    return mins > 0 && mins <= data.tenant.reminder_hours * 60;
+  }).length;
+}
+
+function computePlanosBadge(data: AdminData) {
+  return data.planSignups.length;
+}
+
+function computeEstoqueBadge(data: AdminData) {
+  return data.products.filter((p) => p.stock <= p.min_stock).length;
+}
+
+const AGENDA_LAST_SEEN_KEY = "barbearia_agenda_last_seen";
+
 export function AdminApp(data: AdminData & { financialPinSet: boolean }) {
   const { financialPinSet, ...adminData } = data;
   const [tab, setTab] = useState<TabId>("dashboard");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [financialUnlocked, setFinancialUnlocked] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
+  const [agendaLastSeen, setAgendaLastSeen] = useState<string | null>(null);
   const { tenant } = adminData;
   const relacionamentoBadge = computeRelacionamentoBadge(adminData);
+  const confirmacoesBadge = computeConfirmacoesBadge(adminData);
+  const planosBadge = computePlanosBadge(adminData);
+  const estoqueBadge = computeEstoqueBadge(adminData);
   const financialLocked = financialPinSet && !financialUnlocked;
 
-  const badgeFor = (id: TabId): number => (id === "relacionamento" ? relacionamentoBadge : 0);
+  // Primeira carga: se nunca visitou a Agenda nesse navegador, marca "visto
+  // agora" em vez de tratar todo o histórico de agendamentos como novo.
+  useEffect(() => {
+    const stored = localStorage.getItem(AGENDA_LAST_SEEN_KEY);
+    if (stored) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- lê o "último visto" salvo no navegador só depois de montar (localStorage não existe no servidor)
+      setAgendaLastSeen(stored);
+    } else {
+      const now = new Date().toISOString();
+      localStorage.setItem(AGENDA_LAST_SEEN_KEY, now);
+      setAgendaLastSeen(now);
+    }
+  }, []);
+
+  const agendaBadge = agendaLastSeen
+    ? adminData.appointments.filter((a) => a.status !== "cancelado" && a.created_at > agendaLastSeen).length
+    : 0;
+
+  const badgeFor = (id: TabId): number => {
+    if (id === "relacionamento") return relacionamentoBadge;
+    if (id === "agenda") return agendaBadge;
+    if (id === "confirmacoes") return confirmacoesBadge;
+    if (id === "planos") return planosBadge;
+    if (id === "estoque") return estoqueBadge;
+    return 0;
+  };
 
   const selectTab = (id: TabId) => {
     setMobileOpen(false);
     if (id === "financeiro" && financialLocked) {
       setShowPinModal(true);
       return;
+    }
+    if (id === "agenda") {
+      const now = new Date().toISOString();
+      localStorage.setItem(AGENDA_LAST_SEEN_KEY, now);
+      setAgendaLastSeen(now);
     }
     setTab(id);
   };
