@@ -19,7 +19,14 @@ export function AgendaPanel({ tenant, appointments, barbers, services, blocks, c
   const [completingId, setCompletingId] = useState<string | null>(null);
   const router = useRouter();
 
-  const dayAppts = appointments.filter((a) => a.date === date && a.status !== "cancelado").sort((a, b) => a.time.localeCompare(b.time));
+  const dayAppts = appointments
+    .filter((a) => a.date === date && a.status !== "cancelado")
+    .sort((a, b) => {
+      const aDone = a.status === "concluido" ? 1 : 0;
+      const bDone = b.status === "concluido" ? 1 : 0;
+      if (aDone !== bDone) return aDone - bDone;
+      return a.time.localeCompare(b.time);
+    });
   const dayBlocks = blocks.filter((b) => b.date === date);
 
   const shift = (delta: number) => {
