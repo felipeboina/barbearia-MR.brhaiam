@@ -7,7 +7,7 @@
  */
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { normalizePhone, todayStr } from "@/lib/business/format";
-import type { AppointmentProductItem, TransactionType } from "@/lib/types";
+import type { TransactionType } from "@/lib/types";
 
 async function getSessionClientAndTenant() {
   const supabase = await createSupabaseServerClient();
@@ -419,5 +419,3 @@ export async function setFinancialPin(pin: string | null): Promise<void> {
     .update({ financial_pin: pin && pin.trim().length > 0 ? pin.trim() : null })
     .eq("id", tenantId);
 }
-
-export type { AppointmentProductItem };
