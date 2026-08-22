@@ -190,19 +190,43 @@ export function AdminApp(data: AdminData & { financialPinSet: boolean }) {
   // pela área pública, o Postgres avisa por websocket e a gente só manda
   // buscar os dados de novo — sem precisar apertar F5. router.refresh()
   // busca os dados atualizados do servidor sem perder a aba/estado atual.
+  //
+  // A sessão do dono (cookies) carrega de forma assíncrona; se o canal
+  // conectar antes disso, ele entra "anônimo" e a política de segurança
+  // (cada barbearia só vê os próprios dados) bloqueia os eventos em
+  // silêncio, sem erro nenhum. Por isso buscamos a sessão e avisamos o
+  // realtime dela ANTES de assinar o canal.
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
-    const channel = supabase
-      .channel(`appointments-${tenant.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "appointments", filter: `tenant_id=eq.${tenant.id}` },
-        () => router.refresh()
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | undefined;
+    let cancelled = false;
+
+    (async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (session) {
+        supabase.realtime.setAuth(session.access_token);
+      }
+
+      channel = supabase
+        .channel(`appointments-${tenant.id}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "appointments", filter: `tenant_id=eq.${tenant.id}` },
+          () => router.refresh()
+        )
+        .subscribe((status, err) => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            console.error("[realtime] falha ao conectar ao canal de agendamentos:", status, err);
+          }
+        });
+    })();
 
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
     };
   }, [tenant.id, router]);
 
