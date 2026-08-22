@@ -202,6 +202,12 @@ export function AdminApp(data: AdminData & { financialPinSet: boolean }) {
       setShowPinModal(true);
       return;
     }
+    // Saindo do Financeiro pra qualquer outra aba: tranca de novo. A senha
+    // não fica valendo pro resto da sessão, só enquanto você está dentro
+    // da própria aba — sair e voltar pede de novo.
+    if (tab === "financeiro" && id !== "financeiro" && financialUnlocked) {
+      setFinancialUnlocked(false);
+    }
     if (id === "agenda") {
       const now = new Date().toISOString();
       localStorage.setItem(AGENDA_LAST_SEEN_KEY, now);
