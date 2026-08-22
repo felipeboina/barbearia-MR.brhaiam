@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Scissors,
@@ -24,6 +25,7 @@ import {
 import type { Appointment, Barber, Block, Client, Plan, PlanSignup, Product, Service, Tenant, Transaction } from "@/lib/types";
 import { daysSince, isBirthdayToday, minutesUntilAppt } from "@/lib/business/format";
 import { signOutTenant } from "@/lib/actions/auth";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { FinancialPinModal } from "./FinancialPinModal";
 import { DashboardPanel } from "./panels/DashboardPanel";
 import { AvulsoPanel } from "./panels/AvulsoPanel";
@@ -157,6 +159,7 @@ const AGENDA_LAST_SEEN_KEY = "barbearia_agenda_last_seen";
 
 export function AdminApp(data: AdminData & { financialPinSet: boolean }) {
   const { financialPinSet, ...adminData } = data;
+  const router = useRouter();
   const [tab, setTab] = useState<TabId>("dashboard");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [financialUnlocked, setFinancialUnlocked] = useState(false);
@@ -182,6 +185,26 @@ export function AdminApp(data: AdminData & { financialPinSet: boolean }) {
       setAgendaLastSeen(now);
     }
   }, []);
+
+  // Tempo real: assim que um cliente agenda, confirma ou cancela um horário
+  // pela área pública, o Postgres avisa por websocket e a gente só manda
+  // buscar os dados de novo — sem precisar apertar F5. router.refresh()
+  // busca os dados atualizados do servidor sem perder a aba/estado atual.
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    const channel = supabase
+      .channel(`appointments-${tenant.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "appointments", filter: `tenant_id=eq.${tenant.id}` },
+        () => router.refresh()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tenant.id, router]);
 
   const agendaBadge = agendaLastSeen
     ? adminData.appointments.filter((a) => a.status !== "cancelado" && a.created_at > agendaLastSeen).length
