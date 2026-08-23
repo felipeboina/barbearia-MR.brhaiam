@@ -7,7 +7,7 @@
  */
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { normalizePhone, todayStr } from "@/lib/business/format";
-import type { TransactionType } from "@/lib/types";
+import type { AppointmentProductItem, TransactionType } from "@/lib/types";
 
 async function getSessionClientAndTenant() {
   const supabase = await createSupabaseServerClient();
@@ -310,7 +310,8 @@ export async function reorderServices(orderedIds: string[]) {
 export interface RegisterWalkInInput {
   clientName: string;
   phone: string;
-  serviceId: string;
+  serviceIds: string[];
+  productItems: { productId: string; qty: number }[];
   barberId: string;
   paymentMethod: string;
 }
@@ -319,24 +320,50 @@ export interface RegisterWalkInInput {
  * Registra um corte feito na hora, sem ter passado por agendamento prévio —
  * já cria o atendimento como "concluido" e lança a transação financeira na
  * hora. Não passa pelo desconto de indicação (é um atendimento avulso, sem
- * o contexto de agendamento público).
+ * o contexto de agendamento público). Preço/nome/custo de serviços e
+ * produtos sempre vêm do banco (nunca do que o navegador mandou), mesma
+ * lógica de venda usada em `sellProduct`.
  */
 export async function registerWalkIn(input: RegisterWalkInInput): Promise<{ ok: true } | { ok: false; error: string }> {
   const { supabase, tenantId } = await getSessionClientAndTenant();
   const clientName = input.clientName.trim();
   if (clientName.length < 2) return { ok: false, error: "Digite o nome do cliente." };
+  if (input.serviceIds.length === 0) return { ok: false, error: "Escolha ao menos um serviço." };
 
-  const [{ data: service }, { data: barber }] = await Promise.all([
-    supabase.from("services").select("*").eq("id", input.serviceId).single(),
+  const productIds = input.productItems.map((p) => p.productId);
+  const [{ data: selectedServices }, { data: barber }, { data: productRows }] = await Promise.all([
+    supabase.from("services").select("*").in("id", input.serviceIds),
     supabase.from("barbers").select("*").eq("id", input.barberId).single(),
+    productIds.length > 0 ? supabase.from("products").select("*").in("id", productIds) : Promise.resolve({ data: [] }),
   ]);
-  if (!service || !barber) return { ok: false, error: "Serviço ou barbeiro inválido." };
+  if (!selectedServices || selectedServices.length === 0 || !barber) return { ok: false, error: "Serviço ou barbeiro inválido." };
+
+  const [primaryServiceId, ...extraServiceIds] = input.serviceIds;
+  const totalServicePrice = selectedServices.reduce((s, it) => s + (it.price || 0), 0);
+  const totalDuration = selectedServices.reduce((s, it) => s + (it.duration || 0), 0);
+  const serviceNames = [...selectedServices]
+    .map((s) => s.name)
+    .sort()
+    .join(" + ");
+
+  const productById = new Map((productRows || []).map((p) => [p.id as string, p]));
+  const productItems: AppointmentProductItem[] = input.productItems
+    .map((it) => {
+      const p = productById.get(it.productId);
+      if (!p || it.qty <= 0) return null;
+      const qty = Math.min(it.qty, p.stock);
+      if (qty <= 0) return null;
+      return { productId: p.id, name: p.name, price: p.price, qty };
+    })
+    .filter((x): x is AppointmentProductItem => x !== null);
+  const addonsTotal = +productItems.reduce((s, it) => s + it.price * it.qty, 0).toFixed(2);
+  const totalValue = +(totalServicePrice + addonsTotal).toFixed(2);
 
   const phone = normalizePhone(input.phone);
   const date = todayStr();
   const now = new Date();
   const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-  const commission = +(((service.price || 0) * (barber.commission || 0)) / 100).toFixed(2);
+  const commission = +(((totalServicePrice || 0) * (barber.commission || 0)) / 100).toFixed(2);
 
   const { data: appt, error: apptError } = await supabase
     .from("appointments")
@@ -345,12 +372,16 @@ export async function registerWalkIn(input: RegisterWalkInInput): Promise<{ ok: 
       client_name: clientName,
       phone,
       barber_id: barber.id,
-      service_id: service.id,
+      service_id: primaryServiceId,
+      extra_service_ids: extraServiceIds,
       date,
       time,
-      duration_min: service.duration,
+      duration_min: totalDuration,
       status: "concluido",
       payment_method: input.paymentMethod,
+      products: productItems,
+      addons_total: addonsTotal,
+      total_value: totalValue,
     })
     .select()
     .single();
@@ -362,23 +393,53 @@ export async function registerWalkIn(input: RegisterWalkInInput): Promise<{ ok: 
     type: "servico",
     appt_id: appt.id,
     barber_id: barber.id,
-    service_name: service.name,
+    service_name: serviceNames,
     client_name: clientName,
     phone: phone || null,
-    value: service.price,
+    value: totalServicePrice,
     commission,
     payment_method: input.paymentMethod,
   });
+
+  for (const item of productItems) {
+    await supabase.from("transactions").insert({
+      tenant_id: tenantId,
+      date,
+      type: "entrada",
+      category_id: "produto",
+      product_id: item.productId,
+      description: `Venda (avulso): ${item.qty}x ${item.name}`,
+      value: +(item.price * item.qty).toFixed(2),
+      commission: 0,
+    });
+    const product = productById.get(item.productId);
+    await supabase
+      .from("products")
+      .update({ stock: Math.max(0, (product?.stock || 0) - item.qty) })
+      .eq("id", item.productId);
+    if (product && product.cost > 0) {
+      await supabase.from("transactions").insert({
+        tenant_id: tenantId,
+        date,
+        type: "despesa",
+        category_id: "custo_produto",
+        product_id: item.productId,
+        description: `Custo: ${item.qty}x ${item.name}`,
+        value: +(product.cost * item.qty).toFixed(2),
+        commission: 0,
+      });
+    }
+  }
 
   if (phone.length >= 8) {
     const { data: existing } = await supabase.from("clients").select("*").eq("tenant_id", tenantId).eq("phone", phone).maybeSingle();
     if (existing) {
       await supabase
         .from("clients")
-        .update({ visits: (existing.visits || 0) + 1, total_spent: (existing.total_spent || 0) + service.price, last_visit: date })
+        .update({ visits: (existing.visits || 0) + 1, total_spent: (existing.total_spent || 0) + totalServicePrice, last_visit: date })
         .eq("id", existing.id);
     } else {
-      await supabase.from("clients").insert({ tenant_id: tenantId, phone, name: clientName, visits: 1, total_spent: service.price, last_visit: date });
+      await supabase.from("clients").insert({ tenant_id: tenantId, phone, name: clientName, visits: 1, total_spent: totalServicePrice, last_visit: date });
     }
   }
 
