@@ -69,11 +69,11 @@ export function BookingWizard({
   };
 
   useEffect(() => {
-    if (!barberId || selectedServices.length === 0) return;
+    if (!barberId || serviceIds.length === 0) return;
     let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- indicador de carregamento p/ fetch disparado por mudança de dependência
     setSlotsLoading(true);
-    getSlots(barberId, date, totalDuration).then((res) => {
+    getSlots(barberId, date, totalDuration, serviceIds).then((res) => {
       if (!cancelled) {
         setSlotState(res);
         setSlotsLoading(false);
@@ -82,7 +82,7 @@ export function BookingWizard({
     return () => {
       cancelled = true;
     };
-  }, [barberId, date, totalDuration, selectedServices.length]);
+  }, [barberId, date, totalDuration, serviceIds]);
 
   const phoneDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {

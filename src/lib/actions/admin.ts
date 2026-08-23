@@ -286,7 +286,10 @@ export async function addService(name: string, price: number, duration: number) 
   await supabase.from("services").insert({ tenant_id: tenantId, name, price, duration, sort_order: nextOrder });
 }
 
-export async function updateService(id: string, patch: Partial<{ name: string; price: number; duration: number }>) {
+export async function updateService(
+  id: string,
+  patch: Partial<{ name: string; price: number; duration: number; start_hour: number | null; end_hour: number | null }>
+) {
   const { supabase } = await getSessionClientAndTenant();
   await supabase.from("services").update(patch).eq("id", id);
 }

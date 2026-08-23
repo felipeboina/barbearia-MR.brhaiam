@@ -6,7 +6,7 @@
  * Regra sutil preservada: um agendamento com status "falta" continua
  * ocupando o horário (só "cancelado" libera o slot).
  */
-import type { Appointment, Barber, Block, Tenant } from "@/lib/types";
+import type { Appointment, Barber, Block, Service, Tenant } from "@/lib/types";
 import { toMin, fromMin, todayStr } from "./format";
 
 type SlotConfig = Pick<Tenant, "open_hour" | "close_hour" | "slot_min">;
@@ -58,13 +58,14 @@ export interface AvailableSlot {
 export function computeAvailableSlots(params: {
   barberId: string | null;
   barberHours?: Pick<Barber, "start_hour" | "end_hour"> | null;
+  serviceHours?: Pick<Service, "start_hour" | "end_hour">[];
   date: string;
   appointments: Appointment[];
   blocks: Block[];
   config: SlotConfig;
   serviceDuration: number | null;
 }): { slots: AvailableSlot[]; isFullyBlocked: boolean; fullDayBlockLabel: string | null } {
-  const { barberId, barberHours, date, appointments, blocks, config, serviceDuration } = params;
+  const { barberId, barberHours, serviceHours, date, appointments, blocks, config, serviceDuration } = params;
 
   const dayBlocks = blocks.filter((bl) => (bl.barber_id === null || bl.barber_id === barberId) && bl.date === date);
   const isFullyBlocked = dayBlocks.some((bl) => bl.all_day);
@@ -74,8 +75,15 @@ export function computeAvailableSlots(params: {
     return { slots: [], isFullyBlocked, fullDayBlockLabel };
   }
 
-  const openHour = barberHours?.start_hour ?? config.open_hour;
-  const closeHour = barberHours?.end_hour ?? config.close_hour;
+  // horário efetivo = interseção entre loja, barbeiro e todo serviço
+  // selecionado que tenha horário próprio (ex.: "Cabelo" só das 19h às 21h,
+  // mesmo a loja abrindo às 10h) — o mais restritivo sempre vence.
+  let openHour = barberHours?.start_hour ?? config.open_hour;
+  let closeHour = barberHours?.end_hour ?? config.close_hour;
+  for (const s of serviceHours ?? []) {
+    if (s.start_hour != null) openHour = Math.max(openHour, s.start_hour);
+    if (s.end_hour != null) closeHour = Math.min(closeHour, s.end_hour);
+  }
   const { slot_min: slotMin } = config;
   const dayAppts = appointments.filter((a) => a.barber_id === barberId && a.date === date && a.status !== "cancelado");
   const timeBlocks = dayBlocks.filter((bl) => !bl.all_day);
