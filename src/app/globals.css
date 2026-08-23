@@ -7,6 +7,13 @@
    dark/light do sistema — é a identidade de marca, sempre igual.
 --------------------------------------------------------------- */
 :root {
+  /* site é sempre escuro (identidade de marca fixa, não segue o sistema) —
+     sem isso, alguns navegadores (Edge/Chrome no Windows) tentam "ajudar"
+     aplicando cores claras nos controles nativos (spinner de <input
+     type="number">, autofill etc.), deixando o texto digitado invisível
+     em cima do nosso fundo escuro. */
+  color-scheme: dark;
+
   --ink: #05070d;
   --panel: #0d1526;
   --line: #223154;

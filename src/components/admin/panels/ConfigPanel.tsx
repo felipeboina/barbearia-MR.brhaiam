@@ -179,7 +179,7 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
               <span className="text-sm text-cream font-body">{b.name}</span>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-muted font-mono-receipt">{b.commission}% comissão</span>
-                <div className="flex items-center gap-1 text-xs text-muted font-body">
+                <div className="flex items-center gap-1.5 text-sm text-muted font-body">
                   <input
                     type="number"
                     defaultValue={b.start_hour ?? ""}
@@ -189,7 +189,7 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
                       await updateBarber(b.id, { start_hour: v });
                       router.refresh();
                     }}
-                    className="w-14 rounded px-1.5 py-1 bg-ink border border-line text-cream text-xs"
+                    className="w-16 rounded-md px-2 py-1.5 bg-ink border border-line text-cream text-sm font-mono-receipt"
                   />
                   <span>–</span>
                   <input
@@ -201,7 +201,7 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
                       await updateBarber(b.id, { end_hour: v });
                       router.refresh();
                     }}
-                    className="w-14 rounded px-1.5 py-1 bg-ink border border-line text-cream text-xs"
+                    className="w-16 rounded-md px-2 py-1.5 bg-ink border border-line text-cream text-sm font-mono-receipt"
                   />
                   <span>h</span>
                 </div>
@@ -271,7 +271,7 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
                 <span className="text-xs text-muted font-mono-receipt">
                   R$ {s.price.toFixed(2)} · {s.duration}min
                 </span>
-                <div className="flex items-center gap-1 text-xs text-muted font-body">
+                <div className="flex items-center gap-1.5 text-sm text-muted font-body">
                   <input
                     type="number"
                     defaultValue={s.start_hour ?? ""}
@@ -281,7 +281,7 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
                       await updateService(s.id, { start_hour: v });
                       router.refresh();
                     }}
-                    className="w-14 rounded px-1.5 py-1 bg-ink border border-line text-cream text-xs"
+                    className="w-16 rounded-md px-2 py-1.5 bg-ink border border-line text-cream text-sm font-mono-receipt"
                   />
                   <span>–</span>
                   <input
@@ -293,7 +293,7 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
                       await updateService(s.id, { end_hour: v });
                       router.refresh();
                     }}
-                    className="w-14 rounded px-1.5 py-1 bg-ink border border-line text-cream text-xs"
+                    className="w-16 rounded-md px-2 py-1.5 bg-ink border border-line text-cream text-sm font-mono-receipt"
                   />
                   <span>h</span>
                 </div>
