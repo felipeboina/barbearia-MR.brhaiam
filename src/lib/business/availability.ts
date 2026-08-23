@@ -9,7 +9,12 @@
 import type { Appointment, Barber, Block, Service, Tenant } from "@/lib/types";
 import { toMin, fromMin, todayStr } from "./format";
 
-type SlotConfig = Pick<Tenant, "open_hour" | "close_hour" | "slot_min">;
+type SlotConfig = Pick<Tenant, "open_hour" | "close_hour" | "slot_min" | "work_days">;
+
+/** Dia da semana (0=dom...6=sáb) de uma data "YYYY-MM-DD", sem depender de fuso horário. */
+function weekdayOf(dateStr: string): number {
+  return new Date(dateStr + "T12:00:00").getDay();
+}
 
 export function computeTodayAvailability(
   barbers: Barber[],
@@ -20,7 +25,8 @@ export function computeTodayAvailability(
   const today = todayStr();
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
-  const shopClosedToday = blocks.some((bl) => bl.all_day && bl.barber_id === null && bl.date === today);
+  const shopClosedToday =
+    !config.work_days.includes(weekdayOf(today)) || blocks.some((bl) => bl.all_day && bl.barber_id === null && bl.date === today);
   if (shopClosedToday) return { freeSlots: 0, activeBarbers: 0 };
 
   let freeSlots = 0;
@@ -66,6 +72,10 @@ export function computeAvailableSlots(params: {
   serviceDuration: number | null;
 }): { slots: AvailableSlot[]; isFullyBlocked: boolean; fullDayBlockLabel: string | null } {
   const { barberId, barberHours, serviceHours, date, appointments, blocks, config, serviceDuration } = params;
+
+  if (!config.work_days.includes(weekdayOf(date))) {
+    return { slots: [], isFullyBlocked: true, fullDayBlockLabel: "loja fechada" };
+  }
 
   const dayBlocks = blocks.filter((bl) => (bl.barber_id === null || bl.barber_id === barberId) && bl.date === date);
   const isFullyBlocked = dayBlocks.some((bl) => bl.all_day);
