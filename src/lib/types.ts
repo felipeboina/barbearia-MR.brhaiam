@@ -64,6 +64,7 @@ export interface Service {
   name: string;
   price: number;
   duration: number;
+  sort_order: number;
   created_at: string;
 }
 

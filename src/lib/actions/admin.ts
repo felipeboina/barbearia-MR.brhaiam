@@ -275,7 +275,15 @@ export async function deleteBarber(id: string) {
 
 export async function addService(name: string, price: number, duration: number) {
   const { supabase, tenantId } = await getSessionClientAndTenant();
-  await supabase.from("services").insert({ tenant_id: tenantId, name, price, duration });
+  const { data: last } = await supabase
+    .from("services")
+    .select("sort_order")
+    .eq("tenant_id", tenantId)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const nextOrder = (last?.sort_order ?? -1) + 1;
+  await supabase.from("services").insert({ tenant_id: tenantId, name, price, duration, sort_order: nextOrder });
 }
 
 export async function updateService(id: string, patch: Partial<{ name: string; price: number; duration: number }>) {
@@ -286,6 +294,12 @@ export async function updateService(id: string, patch: Partial<{ name: string; p
 export async function deleteService(id: string) {
   const { supabase } = await getSessionClientAndTenant();
   await supabase.from("services").delete().eq("id", id);
+}
+
+/** Salva a nova ordem de exibição dos serviços (agendamento público + Configurações). */
+export async function reorderServices(orderedIds: string[]) {
+  const { supabase } = await getSessionClientAndTenant();
+  await Promise.all(orderedIds.map((id, index) => supabase.from("services").update({ sort_order: index }).eq("id", id)));
 }
 
 // ---------------------------------------------------------------- atendimento avulso

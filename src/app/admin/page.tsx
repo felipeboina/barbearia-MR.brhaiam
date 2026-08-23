@@ -24,7 +24,7 @@ export default async function AdminPage() {
     { data: pinRow },
   ] = await Promise.all([
     supabase.from("barbers").select("*").eq("tenant_id", tenant.id).order("name"),
-    supabase.from("services").select("*").eq("tenant_id", tenant.id).order("name"),
+    supabase.from("services").select("*").eq("tenant_id", tenant.id).order("sort_order"),
     supabase.from("products").select("*").eq("tenant_id", tenant.id).order("name"),
     supabase.from("clients").select("*").eq("tenant_id", tenant.id),
     supabase.from("appointments").select("*").eq("tenant_id", tenant.id).order("date", { ascending: false }).order("time"),

@@ -33,7 +33,7 @@ export default async function HomePage() {
   const supabase = createSupabaseAdminClient();
   const [{ data: barbers }, { data: services }, { data: products }, { data: plans }] = await Promise.all([
     supabase.from("barbers").select("*").eq("tenant_id", tenant.id).order("name"),
-    supabase.from("services").select("*").eq("tenant_id", tenant.id).order("name"),
+    supabase.from("services").select("*").eq("tenant_id", tenant.id).order("sort_order"),
     supabase.from("products").select("*").eq("tenant_id", tenant.id).order("name"),
     supabase.from("plans").select("*").eq("tenant_id", tenant.id).eq("active", true).order("price"),
   ]);

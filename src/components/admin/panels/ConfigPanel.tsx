@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Shield, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Shield, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { TextInput } from "@/components/ui/TextInput";
 import { DAYS_PT } from "@/lib/business/format";
-import { addBarber, addService, deleteBarber, deleteService, setFinancialPin, updateBarber, updateTenantConfig } from "@/lib/actions/admin";
+import { addBarber, addService, deleteBarber, deleteService, reorderServices, setFinancialPin, updateBarber, updateTenantConfig } from "@/lib/actions/admin";
 import type { AdminData } from "../AdminApp";
 import type { Tenant } from "@/lib/types";
 
@@ -42,6 +42,15 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
   const router = useRouter();
   const [newBarber, setNewBarber] = useState({ name: "", commission: "40" });
   const [newService, setNewService] = useState({ name: "", price: "", duration: "30" });
+
+  const moveService = async (index: number, direction: -1 | 1) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= services.length) return;
+    const reordered = [...services];
+    [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+    await reorderServices(reordered.map((s) => s.id));
+    router.refresh();
+  };
   const [pinInput, setPinInput] = useState("");
   const [pinSubmitting, setPinSubmitting] = useState(false);
 
@@ -224,11 +233,30 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
       </Card>
 
       <Card>
-        <h3 className="text-sm uppercase tracking-wider text-muted mb-3 font-body">Serviços</h3>
+        <h3 className="text-sm uppercase tracking-wider text-muted mb-1 font-body">Serviços</h3>
+        <p className="text-xs text-muted mb-3 font-body">Use as setas para escolher a ordem em que aparecem no agendamento.</p>
         <div className="space-y-2 mb-4">
-          {services.map((s) => (
+          {services.map((s, i) => (
             <div key={s.id} className="flex items-center justify-between py-1.5 border-b border-line last:border-0">
-              <span className="text-sm text-cream font-body">{s.name}</span>
+              <div className="flex items-center gap-1.5">
+                <div className="flex flex-col">
+                  <button
+                    onClick={() => moveService(i, -1)}
+                    disabled={i === 0}
+                    className="text-muted press-scale disabled:opacity-25"
+                  >
+                    <ChevronUp size={14} />
+                  </button>
+                  <button
+                    onClick={() => moveService(i, 1)}
+                    disabled={i === services.length - 1}
+                    className="text-muted press-scale disabled:opacity-25"
+                  >
+                    <ChevronDown size={14} />
+                  </button>
+                </div>
+                <span className="text-sm text-cream font-body">{s.name}</span>
+              </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-muted font-mono-receipt">
                   R$ {s.price.toFixed(2)} · {s.duration}min
