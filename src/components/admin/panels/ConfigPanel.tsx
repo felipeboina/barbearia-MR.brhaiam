@@ -219,26 +219,28 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
           ))}
         </div>
         <p className="text-xs text-muted mb-4 font-body">Horário individual (opcional) — deixe em branco pra usar o horário geral da loja.</p>
-        <div className="flex gap-2">
-          <TextInput placeholder="Nome" value={newBarber.name} onChange={(e) => setNewBarber((s) => ({ ...s, name: e.target.value }))} className="flex-1" />
-          <TextInput
-            type="number"
-            placeholder="% comissão"
-            value={newBarber.commission}
-            onChange={(e) => setNewBarber((s) => ({ ...s, commission: e.target.value }))}
-            className="w-28"
-          />
-          <Button
-            variant="brass"
-            onClick={async () => {
-              if (!newBarber.name.trim()) return;
-              await addBarber(newBarber.name.trim(), parseFloat(newBarber.commission) || 0);
-              setNewBarber({ name: "", commission: "40" });
-              router.refresh();
-            }}
-          >
-            <Plus size={14} />
-          </Button>
+        <div className="space-y-2">
+          <TextInput placeholder="Nome" value={newBarber.name} onChange={(e) => setNewBarber((s) => ({ ...s, name: e.target.value }))} className="w-full" />
+          <div className="flex gap-2">
+            <TextInput
+              type="number"
+              placeholder="% comissão"
+              value={newBarber.commission}
+              onChange={(e) => setNewBarber((s) => ({ ...s, commission: e.target.value }))}
+              className="flex-1"
+            />
+            <Button
+              variant="brass"
+              onClick={async () => {
+                if (!newBarber.name.trim()) return;
+                await addBarber(newBarber.name.trim(), parseFloat(newBarber.commission) || 0);
+                setNewBarber({ name: "", commission: "40" });
+                router.refresh();
+              }}
+            >
+              <Plus size={14} />
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -313,33 +315,40 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
         <p className="text-xs text-muted mb-3 font-body">
           Horário próprio do serviço (opcional) — deixe em branco pra usar o horário geral da loja/barbeiro. Ex.: Cabelo só das 19 às 21h.
         </p>
-        <div className="flex gap-2">
-          <TextInput placeholder="Nome" value={newService.name} onChange={(e) => setNewService((s) => ({ ...s, name: e.target.value }))} className="flex-1" />
+        <div className="space-y-2">
           <TextInput
-            type="number"
-            placeholder="Preço"
-            value={newService.price}
-            onChange={(e) => setNewService((s) => ({ ...s, price: e.target.value }))}
-            className="w-24"
+            placeholder="Nome"
+            value={newService.name}
+            onChange={(e) => setNewService((s) => ({ ...s, name: e.target.value }))}
+            className="w-full"
           />
-          <TextInput
-            type="number"
-            placeholder="Min."
-            value={newService.duration}
-            onChange={(e) => setNewService((s) => ({ ...s, duration: e.target.value }))}
-            className="w-20"
-          />
-          <Button
-            variant="brass"
-            onClick={async () => {
-              if (!newService.name.trim() || !newService.price) return;
-              await addService(newService.name.trim(), parseFloat(newService.price), parseInt(newService.duration) || 30);
-              setNewService({ name: "", price: "", duration: "30" });
-              router.refresh();
-            }}
-          >
-            <Plus size={14} />
-          </Button>
+          <div className="flex gap-2">
+            <TextInput
+              type="number"
+              placeholder="Preço"
+              value={newService.price}
+              onChange={(e) => setNewService((s) => ({ ...s, price: e.target.value }))}
+              className="flex-1"
+            />
+            <TextInput
+              type="number"
+              placeholder="Min."
+              value={newService.duration}
+              onChange={(e) => setNewService((s) => ({ ...s, duration: e.target.value }))}
+              className="flex-1"
+            />
+            <Button
+              variant="brass"
+              onClick={async () => {
+                if (!newService.name.trim() || !newService.price) return;
+                await addService(newService.name.trim(), parseFloat(newService.price), parseInt(newService.duration) || 30);
+                setNewService({ name: "", price: "", duration: "30" });
+                router.refresh();
+              }}
+            >
+              <Plus size={14} />
+            </Button>
+          </div>
         </div>
       </Card>
     </div>
