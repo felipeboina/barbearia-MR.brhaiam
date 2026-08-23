@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Check, Copy, Minus, Plus, QrCode as QrCodeIcon, UserPlus } from "lucide-react";
+import { ArrowLeft, Check, Copy, Minus, Plus, QrCode as QrCodeIcon } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/TextInput";
@@ -10,7 +10,7 @@ import { PixQrCode } from "@/components/ui/PixQrCode";
 import { fmtDuration, fmtMoney, todayStr } from "@/lib/business/format";
 import type { AvailableSlot } from "@/lib/business/availability";
 import { buildPixPayload } from "@/lib/business/pix";
-import { bookAppointment, findClientNoShows, findReferrerName, getSlots } from "@/lib/actions/public";
+import { bookAppointment, findClientNoShows, getSlots } from "@/lib/actions/public";
 import type { Barber, Product, Service, Tenant } from "@/lib/types";
 
 interface DoneInfo {
@@ -44,8 +44,6 @@ export function BookingWizard({
   const [cart, setCart] = useState<Record<string, number>>({});
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [referralPhone, setReferralPhone] = useState("");
-  const [referrerName, setReferrerName] = useState<string | null>(null);
   const [birthday, setBirthday] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "local">("local");
   const [clientClaimsPaid, setClientClaimsPaid] = useState(false);
@@ -99,19 +97,6 @@ export function BookingWizard({
     }, 500);
   }, [phone]);
 
-  const referralDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (referralDebounce.current) clearTimeout(referralDebounce.current);
-    if (referralPhone.replace(/\D/g, "").length < 8) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reseta o nome do indicador quando o telefone digitado fica curto demais
-      setReferrerName(null);
-      return;
-    }
-    referralDebounce.current = setTimeout(async () => {
-      setReferrerName(await findReferrerName(referralPhone, phone));
-    }, 500);
-  }, [referralPhone, phone]);
-
   const cartItems = useMemo(
     () =>
       Object.entries(cart)
@@ -150,7 +135,7 @@ export function BookingWizard({
       totalValue: grandTotal,
       paymentPreference: paymentMethod,
       clientClaimsPaid,
-      referredByPhone: referralPhone || null,
+      referredByPhone: null,
     });
     setSubmitting(false);
     if (!res.ok) {
@@ -334,15 +319,6 @@ export function BookingWizard({
           {noShows >= tenant.no_show_threshold && (
             <p className="text-xs text-danger mb-4 font-body">
               Notamos {noShows} falta(s) anterior(es) nesse telefone. Por favor, confirme presença ou avise com antecedência caso não possa vir.
-            </p>
-          )}
-
-          <Field label="Telefone de quem te indicou (opcional)">
-            <TextInput value={referralPhone} onChange={(e) => setReferralPhone(e.target.value)} placeholder="(00) 00000-0000" />
-          </Field>
-          {referrerName && (
-            <p className="text-xs text-brass mb-4 flex items-center gap-1 font-body">
-              <UserPlus size={12} /> Indicado por {referrerName}
             </p>
           )}
 
