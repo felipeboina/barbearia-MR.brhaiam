@@ -74,6 +74,11 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
     save({ work_days: days });
   };
 
+  const toggleBookingDay = (day: number) => {
+    const days = tenant.booking_days.includes(day) ? tenant.booking_days.filter((d) => d !== day) : [...tenant.booking_days, day];
+    save({ booking_days: days });
+  };
+
   return (
     <div className="anim-step max-w-3xl mx-auto">
       <h1 className="text-2xl mb-6 font-heading text-cream">Configurações</h1>
@@ -86,7 +91,9 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
           <NumberField label="Horário de fechamento" value={tenant.close_hour} onCommit={(v) => save({ close_hour: v })} />
           <NumberField label="Duração do slot (min)" value={tenant.slot_min} onCommit={(v) => save({ slot_min: v })} />
         </div>
-        <span className="block text-xs uppercase tracking-wider mb-1.5 mt-1 text-muted font-body">Dias de funcionamento</span>
+        <span className="block text-xs uppercase tracking-wider mb-1.5 mt-1 text-muted font-body">
+          Dias de funcionamento (mostrado na página pública, ex.: &quot;Seg a Sáb&quot;)
+        </span>
         <div className="flex gap-1.5 mb-2">
           {DAYS_PT.map((label, i) => (
             <button
@@ -103,6 +110,27 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
             </button>
           ))}
         </div>
+
+        <span className="block text-xs uppercase tracking-wider mb-1.5 mt-3 text-muted font-body">
+          Dias com agendamento online (nos dias não marcados, o cliente não consegue marcar horário — mesmo a loja funcionando nesse dia)
+        </span>
+        <div className="flex gap-1.5 mb-2">
+          {DAYS_PT.map((label, i) => (
+            <button
+              key={i}
+              onClick={() => toggleBookingDay(i)}
+              className="press-scale w-9 h-9 rounded-md text-xs border smooth font-body"
+              style={{
+                background: tenant.booking_days.includes(i) ? "var(--brass)" : "transparent",
+                color: tenant.booking_days.includes(i) ? "var(--ink)" : "var(--muted)",
+                borderColor: "var(--line)",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <TextField label="Endereço" value={tenant.address} onCommit={(v) => save({ address: v })} placeholder="Rua, número, bairro" />
       </Card>
 

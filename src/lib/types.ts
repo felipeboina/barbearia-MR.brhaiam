@@ -26,6 +26,7 @@ export interface Tenant {
   shop_whatsapp: string;
   address: string;
   work_days: number[];
+  booking_days: number[];
   inactive_days: number;
   inactive_discount: number;
   loyalty_goal: number;

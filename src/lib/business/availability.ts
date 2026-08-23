@@ -9,12 +9,18 @@
 import type { Appointment, Barber, Block, Service, Tenant } from "@/lib/types";
 import { toMin, fromMin, todayStr } from "./format";
 
-type SlotConfig = Pick<Tenant, "open_hour" | "close_hour" | "slot_min" | "work_days">;
+type SlotConfig = Pick<Tenant, "open_hour" | "close_hour" | "slot_min" | "booking_days">;
 
 /** Dia da semana (0=dom...6=sáb) de uma data "YYYY-MM-DD", sem depender de fuso horário. */
 function weekdayOf(dateStr: string): number {
   return new Date(dateStr + "T12:00:00").getDay();
 }
+
+// todos os dias — usado como fallback enquanto `booking_days` não existir
+// ainda no banco (coluna nova, ver migration 0009): sem isso, um tenant
+// sem a coluna derrubaria a busca de horários inteira em vez de só não
+// aplicar a restrição.
+const ALL_WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
 
 export function computeTodayAvailability(
   barbers: Barber[],
@@ -26,7 +32,8 @@ export function computeTodayAvailability(
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const shopClosedToday =
-    !config.work_days.includes(weekdayOf(today)) || blocks.some((bl) => bl.all_day && bl.barber_id === null && bl.date === today);
+    !(config.booking_days ?? ALL_WEEKDAYS).includes(weekdayOf(today)) ||
+    blocks.some((bl) => bl.all_day && bl.barber_id === null && bl.date === today);
   if (shopClosedToday) return { freeSlots: 0, activeBarbers: 0 };
 
   let freeSlots = 0;
@@ -73,8 +80,8 @@ export function computeAvailableSlots(params: {
 }): { slots: AvailableSlot[]; isFullyBlocked: boolean; fullDayBlockLabel: string | null } {
   const { barberId, barberHours, serviceHours, date, appointments, blocks, config, serviceDuration } = params;
 
-  if (!config.work_days.includes(weekdayOf(date))) {
-    return { slots: [], isFullyBlocked: true, fullDayBlockLabel: "loja fechada" };
+  if (!(config.booking_days ?? ALL_WEEKDAYS).includes(weekdayOf(date))) {
+    return { slots: [], isFullyBlocked: true, fullDayBlockLabel: "sem agendamento nesse dia" };
   }
 
   const dayBlocks = blocks.filter((bl) => (bl.barber_id === null || bl.barber_id === barberId) && bl.date === date);
