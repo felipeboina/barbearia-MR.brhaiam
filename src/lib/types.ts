@@ -79,6 +79,7 @@ export interface Product {
   min_stock: number;
   price: number;
   cost: number;
+  show_in_booking: boolean;
   created_at: string;
 }
 

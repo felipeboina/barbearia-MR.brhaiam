@@ -160,6 +160,12 @@ export async function deleteProduct(id: string) {
   await supabase.from("products").delete().eq("id", id);
 }
 
+/** Mostra/esconde o produto na etapa "Adicionar produtos" do agendamento público (não afeta o Estoque nem o Atendimento Avulso). */
+export async function setProductShowInBooking(id: string, showInBooking: boolean) {
+  const { supabase } = await getSessionClientAndTenant();
+  await supabase.from("products").update({ show_in_booking: showInBooking }).eq("id", id);
+}
+
 // ---------------------------------------------------------------- planos
 
 export async function addPlan(data: { name: string; price: number; period: string; periodDays: number; cutsIncluded: number; benefits: string[] }) {

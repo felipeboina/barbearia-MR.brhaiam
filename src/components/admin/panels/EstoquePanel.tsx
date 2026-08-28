@@ -7,8 +7,9 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { TextInput } from "@/components/ui/TextInput";
+import { Toggle } from "@/components/ui/Toggle";
 import { fmtMoney } from "@/lib/business/format";
-import { addProduct, deleteProduct, restockProduct, sellProduct } from "@/lib/actions/admin";
+import { addProduct, deleteProduct, restockProduct, sellProduct, setProductShowInBooking } from "@/lib/actions/admin";
 import type { AdminData } from "../AdminApp";
 
 export function EstoquePanel({ products }: AdminData) {
@@ -93,6 +94,16 @@ export function EstoquePanel({ products }: AdminData) {
                   <Trash2 size={14} />
                 </button>
               </div>
+            </div>
+            <div className="mt-2 pt-2 border-t border-line">
+              <Toggle
+                checked={p.show_in_booking !== false}
+                onChange={async (v) => {
+                  await setProductShowInBooking(p.id, v);
+                  router.refresh();
+                }}
+                label="Aparece pro cliente na hora de agendar"
+              />
             </div>
             {sellingId === p.id && (
               <div className="flex items-center gap-2 mt-3 pt-3 border-t border-line anim-pop">

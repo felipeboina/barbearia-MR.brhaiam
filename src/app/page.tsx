@@ -43,7 +43,7 @@ export default async function HomePage() {
       tenant={tenant}
       barbers={(barbers as Barber[]) || []}
       services={(services as Service[]) || []}
-      products={(products as Product[]) || []}
+      products={((products as Product[]) || []).filter((p) => p.show_in_booking !== false)}
       plans={(plans as Plan[]) || []}
     />
   );
