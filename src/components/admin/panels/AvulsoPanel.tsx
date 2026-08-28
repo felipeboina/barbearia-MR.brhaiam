@@ -2,14 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Minus, Plus, Scissors, UserPlus } from "lucide-react";
+import { Minus, Plus, Scissors } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { TextInput, Select } from "@/components/ui/TextInput";
 import { fmtMoney } from "@/lib/business/format";
 import { PAYMENT_METHODS } from "@/lib/types";
-import { registerWalkIn, registerClient } from "@/lib/actions/admin";
+import { registerWalkIn } from "@/lib/actions/admin";
 import type { AdminData } from "../AdminApp";
 
 export function AvulsoPanel({ clients, services, products, barbers }: AdminData) {
@@ -17,6 +17,7 @@ export function AvulsoPanel({ clients, services, products, barbers }: AdminData)
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [birthday, setBirthday] = useState("");
   const [serviceIds, setServiceIds] = useState<string[]>([]);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [barberId, setBarberId] = useState(barbers[0]?.id || "");
@@ -49,6 +50,7 @@ export function AvulsoPanel({ clients, services, products, barbers }: AdminData)
     await registerWalkIn({
       clientName: name,
       phone,
+      birthday: birthday || null,
       serviceIds,
       productItems: cartItems.map((it) => ({ productId: it.product.id, qty: it.qty })),
       barberId,
@@ -57,24 +59,9 @@ export function AvulsoPanel({ clients, services, products, barbers }: AdminData)
     setSubmitting(false);
     setName("");
     setPhone("");
+    setBirthday("");
     setServiceIds([]);
     setCart({});
-    router.refresh();
-  };
-
-  const [clientName, setClientName] = useState("");
-  const [clientPhone, setClientPhone] = useState("");
-  const [clientBirthday, setClientBirthday] = useState("");
-  const [submittingClient, setSubmittingClient] = useState(false);
-
-  const submitClient = async () => {
-    if (!clientName.trim() || clientPhone.replace(/\D/g, "").length < 8) return;
-    setSubmittingClient(true);
-    await registerClient({ name: clientName, phone: clientPhone, birthday: clientBirthday || null });
-    setSubmittingClient(false);
-    setClientName("");
-    setClientPhone("");
-    setClientBirthday("");
     router.refresh();
   };
 
@@ -87,11 +74,14 @@ export function AvulsoPanel({ clients, services, products, barbers }: AdminData)
           <Scissors size={14} /> Registrar corte feito agora
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Nome do cliente">
+          <Field label="Nome do cliente*">
             <TextInput value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
           <Field label="Telefone (opcional)">
             <TextInput value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(00) 00000-0000" />
+          </Field>
+          <Field label="Data de nascimento (opcional)">
+            <TextInput type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} />
           </Field>
           <Field label="Barbeiro">
             <Select value={barberId} onChange={(e) => setBarberId(e.target.value)}>
@@ -179,26 +169,6 @@ export function AvulsoPanel({ clients, services, products, barbers }: AdminData)
 
         <Button variant="primary" disabled={submitting || !name.trim() || serviceIds.length === 0} onClick={submitWalkIn}>
           {submitting ? "Registrando..." : `Registrar${totalValue > 0 ? ` (${fmtMoney(totalValue)})` : ""}`}
-        </Button>
-      </Card>
-
-      <Card>
-        <h3 className="text-sm uppercase tracking-wider text-muted mb-3 flex items-center gap-1.5 font-body">
-          <UserPlus size={14} /> Cadastrar cliente (sem agendar nada)
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Nome">
-            <TextInput value={clientName} onChange={(e) => setClientName(e.target.value)} />
-          </Field>
-          <Field label="Telefone">
-            <TextInput value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} placeholder="(00) 00000-0000" />
-          </Field>
-          <Field label="Data de nascimento (opcional)">
-            <TextInput type="date" value={clientBirthday} onChange={(e) => setClientBirthday(e.target.value)} />
-          </Field>
-        </div>
-        <Button variant="brass" disabled={submittingClient} onClick={submitClient}>
-          {submittingClient ? "Salvando..." : "Cadastrar cliente"}
         </Button>
       </Card>
     </div>

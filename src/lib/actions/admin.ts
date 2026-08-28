@@ -316,6 +316,7 @@ export async function reorderServices(orderedIds: string[]) {
 export interface RegisterWalkInInput {
   clientName: string;
   phone: string;
+  birthday: string | null;
   serviceIds: string[];
   productItems: { productId: string; qty: number }[];
   barberId: string;
@@ -437,40 +438,26 @@ export async function registerWalkIn(input: RegisterWalkInInput): Promise<{ ok: 
     }
   }
 
+  const birthday = input.birthday || null;
   if (phone.length >= 8) {
     const { data: existing } = await supabase.from("clients").select("*").eq("tenant_id", tenantId).eq("phone", phone).maybeSingle();
     if (existing) {
       await supabase
         .from("clients")
-        .update({ visits: (existing.visits || 0) + 1, total_spent: (existing.total_spent || 0) + totalServicePrice, last_visit: date })
+        .update({
+          visits: (existing.visits || 0) + 1,
+          total_spent: (existing.total_spent || 0) + totalServicePrice,
+          last_visit: date,
+          ...(birthday ? { birthday } : {}),
+        })
         .eq("id", existing.id);
     } else {
-      await supabase.from("clients").insert({ tenant_id: tenantId, phone, name: clientName, visits: 1, total_spent: totalServicePrice, last_visit: date });
+      await supabase
+        .from("clients")
+        .insert({ tenant_id: tenantId, phone, name: clientName, birthday, visits: 1, total_spent: totalServicePrice, last_visit: date });
     }
   }
 
-  return { ok: true };
-}
-
-export interface RegisterClientInput {
-  name: string;
-  phone: string;
-  birthday: string | null;
-}
-
-/** Cadastra um cliente direto, sem vincular a nenhum atendimento. */
-export async function registerClient(input: RegisterClientInput): Promise<{ ok: true } | { ok: false; error: string }> {
-  const { supabase, tenantId } = await getSessionClientAndTenant();
-  const name = input.name.trim();
-  const phone = normalizePhone(input.phone);
-  if (name.length < 2 || phone.length < 8) return { ok: false, error: "Preencha nome e telefone válidos." };
-
-  const { data: existing } = await supabase.from("clients").select("id").eq("tenant_id", tenantId).eq("phone", phone).maybeSingle();
-  if (existing) {
-    await supabase.from("clients").update({ name, birthday: input.birthday }).eq("id", existing.id);
-  } else {
-    await supabase.from("clients").insert({ tenant_id: tenantId, phone, name, birthday: input.birthday, visits: 0, total_spent: 0, last_visit: null });
-  }
   return { ok: true };
 }
 
