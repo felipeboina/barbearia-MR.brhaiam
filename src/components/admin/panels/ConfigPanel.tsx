@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { TextInput } from "@/components/ui/TextInput";
 import { DAYS_PT } from "@/lib/business/format";
+import { InstallAppButton } from "../InstallAppButton";
 import {
   addBarber,
   addService,
@@ -82,6 +83,15 @@ export function ConfigPanel({ tenant, barbers, services, financialPinSet }: Admi
   return (
     <div className="anim-step max-w-3xl mx-auto">
       <h1 className="text-2xl mb-6 font-heading text-cream">Configurações</h1>
+
+      <Card className="mb-4">
+        <h3 className="text-sm uppercase tracking-wider text-muted mb-1 font-body">Baixar app</h3>
+        <p className="text-xs text-muted mb-3 font-body">
+          Instala o painel como um app no computador ou no celular — ícone próprio, sem precisar abrir o navegador toda vez. Funciona em PC e
+          celular.
+        </p>
+        <InstallAppButton />
+      </Card>
 
       <Card className="mb-4">
         <h3 className="text-sm uppercase tracking-wider text-muted mb-3 font-body">Loja</h3>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Oswald, Work_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -21,8 +21,15 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Barbearia SaaS",
-  description: "Sistema de agendamento e gestão para barbearias",
+  title: "Barbearia Mr. Brhaian",
+  description: "Sistema de agendamento e gestão da Barbearia Mr. Brhaian",
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#05070d",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
