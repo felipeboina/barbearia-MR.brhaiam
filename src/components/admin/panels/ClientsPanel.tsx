@@ -1,15 +1,54 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, Phone, Search, Star, UserPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronDown, Pencil, Phone, Search, Star, Trash2, UserPlus } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Field } from "@/components/ui/Field";
 import { TextInput } from "@/components/ui/TextInput";
 import { fmtDatePt, fmtMoney } from "@/lib/business/format";
+import { deleteClient, updateClient } from "@/lib/actions/admin";
 import type { AdminData } from "../AdminApp";
 
 export function ClientsPanel({ tenant, clients, transactions, appointments, barbers }: AdminData) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", phone: "", birthday: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const startEdit = (c: AdminData["clients"][number]) => {
+    setEditingId(c.id);
+    setConfirmDeleteId(null);
+    setEditError(null);
+    setEditForm({ name: c.name, phone: c.phone, birthday: c.birthday || "" });
+  };
+
+  const saveEdit = async (id: string) => {
+    setSavingEdit(true);
+    setEditError(null);
+    const res = await updateClient(id, { name: editForm.name, phone: editForm.phone, birthday: editForm.birthday || null });
+    setSavingEdit(false);
+    if (!res.ok) {
+      setEditError(res.error);
+      return;
+    }
+    setEditingId(null);
+    router.refresh();
+  };
+
+  const confirmDelete = async (id: string) => {
+    setDeletingId(id);
+    await deleteClient(id);
+    setDeletingId(null);
+    setConfirmDeleteId(null);
+    router.refresh();
+  };
 
   const list = useMemo(
     () =>
@@ -42,38 +81,96 @@ export function ClientsPanel({ tenant, clients, transactions, appointments, barb
           const overLimit = (c.no_shows || 0) >= tenant.no_show_threshold;
           const isOpen = expanded === c.id;
           const history = isOpen ? historyFor(c.phone) : [];
+          const isEditing = editingId === c.id;
           return (
             <Card key={c.id}>
-              <button className="w-full text-left flex items-center justify-between" onClick={() => setExpanded(isOpen ? null : c.id)}>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className="text-sm font-semibold text-cream font-body">{c.name}</span>
-                    {(c.points || 0) > 0 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-highlight-bg text-brass flex items-center gap-0.5 font-body">
-                        <Star size={9} /> {c.points}
-                      </span>
-                    )}
-                    {(c.referrals_count || 0) > 0 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-success-bg text-success flex items-center gap-0.5 font-body">
-                        <UserPlus size={9} /> {c.referrals_count}
-                      </span>
-                    )}
-                    {overLimit && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-danger-bg text-danger font-body">{c.no_shows} faltas</span>
-                    )}
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  className="flex-1 min-w-0 text-left flex items-center justify-between"
+                  onClick={() => setExpanded(isOpen ? null : c.id)}
+                >
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <span className="text-sm font-semibold text-cream font-body">{c.name}</span>
+                      {(c.points || 0) > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-highlight-bg text-brass flex items-center gap-0.5 font-body">
+                          <Star size={9} /> {c.points}
+                        </span>
+                      )}
+                      {(c.referrals_count || 0) > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-success-bg text-success flex items-center gap-0.5 font-body">
+                          <UserPlus size={9} /> {c.referrals_count}
+                        </span>
+                      )}
+                      {overLimit && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-danger-bg text-danger font-body">{c.no_shows} faltas</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted flex items-center gap-1 font-body">
+                      <Phone size={10} /> {c.phone}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted flex items-center gap-1 font-body">
-                    <Phone size={10} /> {c.phone}
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-sm text-brass font-mono-receipt">{fmtMoney(c.total_spent || 0)}</div>
+                      <div className="text-xs text-muted font-body">{c.visits || 0} visitas</div>
+                    </div>
+                    <ChevronDown size={16} className={`text-muted smooth ${isOpen ? "rotate-180" : ""}`} />
+                  </div>
+                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => (isEditing ? setEditingId(null) : startEdit(c))} className="text-muted press-scale">
+                    <Pencil size={14} />
+                  </button>
+                  <button onClick={() => setConfirmDeleteId(confirmDeleteId === c.id ? null : c.id)} className="text-danger press-scale">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {confirmDeleteId === c.id && (
+                <div className="mt-3 pt-3 border-t border-line flex items-center gap-2 anim-pop">
+                  <p className="text-xs text-danger font-body flex-1">
+                    Apagar o cadastro de {c.name}? Pontos, aniversário e faltas registradas se perdem (o histórico financeiro continua existindo).
+                  </p>
+                  <Button variant="ghost" onClick={() => setConfirmDeleteId(null)}>
+                    Cancelar
+                  </Button>
+                  <Button variant="danger" disabled={deletingId === c.id} onClick={() => confirmDelete(c.id)}>
+                    {deletingId === c.id ? "Excluindo..." : "Confirmar"}
+                  </Button>
+                </div>
+              )}
+
+              {isEditing && (
+                <div className="mt-3 pt-3 border-t border-line anim-pop">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                    <Field label="Nome">
+                      <TextInput value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} />
+                    </Field>
+                    <Field label="Telefone">
+                      <TextInput value={editForm.phone} onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))} />
+                    </Field>
+                    <Field label="Data de nascimento (opcional)">
+                      <TextInput
+                        type="date"
+                        value={editForm.birthday}
+                        onChange={(e) => setEditForm((f) => ({ ...f, birthday: e.target.value }))}
+                      />
+                    </Field>
+                  </div>
+                  {editError && <p className="text-xs text-danger mb-2 font-body">{editError}</p>}
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" onClick={() => setEditingId(null)}>
+                      Cancelar
+                    </Button>
+                    <Button variant="primary" disabled={savingEdit} onClick={() => saveEdit(c.id)}>
+                      {savingEdit ? "Salvando..." : "Salvar"}
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="text-sm text-brass font-mono-receipt">{fmtMoney(c.total_spent || 0)}</div>
-                    <div className="text-xs text-muted font-body">{c.visits || 0} visitas</div>
-                  </div>
-                  <ChevronDown size={16} className={`text-muted smooth ${isOpen ? "rotate-180" : ""}`} />
-                </div>
-              </button>
+              )}
+
               {isOpen && (
                 <div className="mt-3 pt-3 border-t border-line space-y-1.5 anim-pop">
                   {c.last_visit && (

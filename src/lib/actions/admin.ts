@@ -461,6 +461,66 @@ export async function registerWalkIn(input: RegisterWalkInInput): Promise<{ ok: 
   return { ok: true };
 }
 
+// ---------------------------------------------------------------- clientes
+
+export interface UpdateClientInput {
+  name: string;
+  phone: string;
+  birthday: string | null;
+}
+
+/**
+ * Edita os dados de um cliente já cadastrado. Se o telefone mudar, também
+ * atualiza o telefone nos agendamentos e transações já existentes — essas
+ * tabelas guardam o telefone direto (não têm client_id), então sem isso o
+ * histórico do cliente "sumiria" da ficha dele só por ter trocado de
+ * número. O nome antigo em registros passados fica como estava (é um
+ * retrato de como se chamava naquele momento, não precisa reescrever).
+ */
+export async function updateClient(id: string, input: UpdateClientInput): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { supabase, tenantId } = await getSessionClientAndTenant();
+  const name = input.name.trim();
+  const phone = normalizePhone(input.phone);
+  if (name.length < 2 || phone.length < 8) return { ok: false, error: "Preencha nome e telefone válidos." };
+
+  const { data: current } = await supabase.from("clients").select("phone").eq("id", id).eq("tenant_id", tenantId).single();
+  if (!current) return { ok: false, error: "Cliente não encontrado." };
+
+  if (phone !== current.phone) {
+    const { data: conflict } = await supabase
+      .from("clients")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("phone", phone)
+      .neq("id", id)
+      .maybeSingle();
+    if (conflict) return { ok: false, error: "Já existe outro cliente cadastrado com esse telefone." };
+  }
+
+  await supabase.from("clients").update({ name, phone, birthday: input.birthday }).eq("id", id);
+
+  if (phone !== current.phone) {
+    await Promise.all([
+      supabase.from("appointments").update({ phone }).eq("tenant_id", tenantId).eq("phone", current.phone),
+      supabase.from("transactions").update({ phone }).eq("tenant_id", tenantId).eq("phone", current.phone),
+    ]);
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Apaga o cadastro do cliente (nome, aniversário, pontos de fidelidade,
+ * créditos de indicação, contagem de faltas). NÃO apaga o histórico de
+ * agendamentos/transações já realizados — isso é registro financeiro,
+ * continua existindo mesmo sem a "ficha" do cliente. Se esse telefone
+ * agendar de novo depois, um cadastro novo é criado do zero.
+ */
+export async function deleteClient(id: string) {
+  const { supabase } = await getSessionClientAndTenant();
+  await supabase.from("clients").delete().eq("id", id);
+}
+
 // ---------------------------------------------------------------- senha do financeiro
 
 /**
