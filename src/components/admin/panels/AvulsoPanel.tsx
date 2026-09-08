@@ -23,9 +23,33 @@ export function AvulsoPanel({ clients, services, products, barbers }: AdminData)
   const [barberId, setBarberId] = useState(barbers[0]?.id || "");
   const [paymentMethod, setPaymentMethod] = useState<string>(PAYMENT_METHODS[0]?.id || "");
   const [submitting, setSubmitting] = useState(false);
+  const [nameFocused, setNameFocused] = useState(false);
+  const [phoneFocused, setPhoneFocused] = useState(false);
 
   const cleanPhone = phone.replace(/\D/g, "");
   const matchedClient = useMemo(() => (cleanPhone.length >= 8 ? clients.find((c) => c.phone === cleanPhone) : null), [cleanPhone, clients]);
+
+  // Autocompletar por nome ou telefone — digitando "Marcos" com dois
+  // clientes cadastrados (Marcos Roberto, Marcos Antunes), aparecem os
+  // dois na lista pra escolher; ao clicar em um, nome/telefone/aniversário
+  // são preenchidos automaticamente.
+  const nameMatches = useMemo(() => {
+    const q = name.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 6);
+  }, [name, clients]);
+  const phoneMatches = useMemo(() => {
+    if (cleanPhone.length < 3) return [];
+    return clients.filter((c) => c.phone.includes(cleanPhone)).slice(0, 6);
+  }, [cleanPhone, clients]);
+
+  const pickClient = (c: (typeof clients)[number]) => {
+    setName(c.name);
+    setPhone(c.phone);
+    setBirthday(c.birthday || "");
+    setNameFocused(false);
+    setPhoneFocused(false);
+  };
 
   const toggleService = (id: string) => {
     setServiceIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
@@ -74,12 +98,65 @@ export function AvulsoPanel({ clients, services, products, barbers }: AdminData)
           <Scissors size={14} /> Registrar corte feito agora
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Nome do cliente*">
-            <TextInput value={name} onChange={(e) => setName(e.target.value)} />
-          </Field>
-          <Field label="Telefone (opcional)">
-            <TextInput value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(00) 00000-0000" />
-          </Field>
+          <div className="relative">
+            <Field label="Nome do cliente*">
+              <TextInput
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onFocus={() => setNameFocused(true)}
+                onBlur={() => setNameFocused(false)}
+                autoComplete="off"
+              />
+            </Field>
+            {nameFocused && nameMatches.length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-md border border-line bg-panel shadow-lg max-h-48 overflow-y-auto anim-pop">
+                {nameMatches.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      pickClient(c);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-highlight-bg smooth border-b border-line last:border-0"
+                  >
+                    <div className="text-sm text-cream font-body">{c.name}</div>
+                    <div className="text-xs text-muted font-body">{c.phone}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="relative">
+            <Field label="Telefone (opcional)">
+              <TextInput
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                onFocus={() => setPhoneFocused(true)}
+                onBlur={() => setPhoneFocused(false)}
+                placeholder="(00) 00000-0000"
+                autoComplete="off"
+              />
+            </Field>
+            {phoneFocused && phoneMatches.length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-md border border-line bg-panel shadow-lg max-h-48 overflow-y-auto anim-pop">
+                {phoneMatches.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      pickClient(c);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-highlight-bg smooth border-b border-line last:border-0"
+                  >
+                    <div className="text-sm text-cream font-body">{c.name}</div>
+                    <div className="text-xs text-muted font-body">{c.phone}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <Field label="Data de nascimento (opcional)">
             <TextInput type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} />
           </Field>
