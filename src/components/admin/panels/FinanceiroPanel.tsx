@@ -51,12 +51,18 @@ export function FinanceiroPanel({ transactions, barbers }: AdminData) {
     incomeByCategory[t.service_name || "Serviço"] = (incomeByCategory[t.service_name || "Serviço"] || 0) + t.value;
   });
   monthTx.filter((t) => t.type === "entrada").forEach((t) => {
-    const label = INCOME_CATEGORIES.find((c) => c.id === t.category_id)?.label || "Outra entrada";
+    // categoria conhecida agrupa pelo nome fixo (ex.: "Venda de produtos");
+    // categoria "outro" ou automática (ex.: custo_produto) mostra a
+    // descrição específica de cada lançamento em vez de amontoar tudo
+    // num "Outra entrada" genérico.
+    const known = INCOME_CATEGORIES.find((c) => c.id === t.category_id);
+    const label = known ? known.label : t.description || "Outra entrada";
     incomeByCategory[label] = (incomeByCategory[label] || 0) + t.value;
   });
   const expenseByCategory: Record<string, number> = {};
   monthTx.filter((t) => t.type === "despesa").forEach((t) => {
-    const label = EXPENSE_CATEGORIES.find((c) => c.id === t.category_id)?.label || "Outra saída";
+    const known = EXPENSE_CATEGORIES.find((c) => c.id === t.category_id);
+    const label = known ? known.label : t.description || "Outra saída";
     expenseByCategory[label] = (expenseByCategory[label] || 0) + t.value;
   });
   const incomeRows = Object.entries(incomeByCategory).sort((a, b) => b[1] - a[1]);
