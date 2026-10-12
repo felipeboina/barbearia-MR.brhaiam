@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowDownRight, ArrowUpRight, Minus, Plus } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -68,7 +68,7 @@ export function FinanceiroPanel({ transactions, barbers }: AdminData) {
   const incomeRows = Object.entries(incomeByCategory).sort((a, b) => b[1] - a[1]);
   const expenseRows = Object.entries(expenseByCategory).sort((a, b) => b[1] - a[1]);
 
-  const dailySummary = useMemo(() => {
+  const dailyChartData = useMemo(() => {
     const byDate: Record<string, { entradas: number; saidas: number }> = {};
     monthTx.forEach((t) => {
       if (!byDate[t.date]) byDate[t.date] = { entradas: 0, saidas: 0 };
@@ -76,17 +76,9 @@ export function FinanceiroPanel({ transactions, barbers }: AdminData) {
       else if (t.type === "despesa") byDate[t.date].saidas += t.value;
     });
     return Object.entries(byDate)
-      .map(([date, v]) => ({ date, entradas: v.entradas, saidas: v.saidas, saldo: v.entradas - v.saidas }))
-      .sort((a, b) => b.date.localeCompare(a.date));
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([date, v]) => ({ day: date.slice(8, 10), entradas: v.entradas, saidas: v.saidas, saldo: v.entradas - v.saidas }));
   }, [monthTx]);
-
-  const dailyChartData = useMemo(
-    () =>
-      [...dailySummary]
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .map((d) => ({ day: d.date.slice(8, 10), entradas: d.entradas, saidas: d.saidas, saldo: d.saldo })),
-    [dailySummary]
-  );
 
   const byPaymentMethod = PAYMENT_METHODS.map((m) => ({
     method: m,
@@ -207,30 +199,26 @@ export function FinanceiroPanel({ transactions, barbers }: AdminData) {
 
       <Card className="mb-6">
         <h3 className="text-sm uppercase tracking-wider text-muted mb-3 font-body">Resumo diário</h3>
-        <div className="space-y-1 max-h-96 overflow-y-auto">
-          <div className="hidden sm:flex items-center justify-between text-[10px] uppercase tracking-wider text-muted font-body pb-1.5 border-b border-line">
-            <span>Dia</span>
-            <div className="flex items-center gap-3">
-              <span className="w-24 text-right">Entradas</span>
-              <span className="w-24 text-right">Saídas</span>
-              <span className="w-24 text-right">Saldo</span>
-            </div>
+        {dailyChartData.length > 0 ? (
+          <div style={{ width: "100%", height: 280 }}>
+            <ResponsiveContainer>
+              <BarChart data={dailyChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+                <XAxis dataKey="day" stroke="var(--muted)" fontSize={12} />
+                <YAxis stroke="var(--muted)" fontSize={12} />
+                <Tooltip
+                  contentStyle={{ background: "var(--panel)", border: "1px solid var(--line)", color: "var(--cream)" }}
+                  formatter={(v) => fmtMoney(Number(v))}
+                />
+                <Legend />
+                <Bar dataKey="entradas" name="Entradas" fill="var(--success)" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="saidas" name="Saídas" fill="var(--danger)" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-          {dailySummary.map((d) => (
-            <div
-              key={d.date}
-              className="flex items-center justify-between flex-wrap gap-y-1 text-sm font-body py-1.5 border-b border-line last:border-0"
-            >
-              <span className="text-cream">{fmtDatePt(d.date)}</span>
-              <div className="flex items-center gap-3">
-                <span className="w-24 text-right text-success font-mono-receipt">{fmtMoney(d.entradas)}</span>
-                <span className="w-24 text-right text-danger font-mono-receipt">{fmtMoney(d.saidas)}</span>
-                <span className={`w-24 text-right font-mono-receipt ${d.saldo >= 0 ? "text-brass" : "text-danger"}`}>{fmtMoney(d.saldo)}</span>
-              </div>
-            </div>
-          ))}
-          {dailySummary.length === 0 && <p className="text-xs text-muted font-body pt-1.5">Nenhum lançamento nesse mês.</p>}
-        </div>
+        ) : (
+          <p className="text-xs text-muted font-body">Nenhum lançamento nesse mês.</p>
+        )}
       </Card>
 
       <h2 className="text-sm uppercase tracking-wider text-muted mb-3 font-body">Entradas e saídas por dia</h2>
