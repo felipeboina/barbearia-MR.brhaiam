@@ -68,6 +68,18 @@ export function FinanceiroPanel({ transactions, barbers }: AdminData) {
   const incomeRows = Object.entries(incomeByCategory).sort((a, b) => b[1] - a[1]);
   const expenseRows = Object.entries(expenseByCategory).sort((a, b) => b[1] - a[1]);
 
+  const dailySummary = useMemo(() => {
+    const byDate: Record<string, { entradas: number; saidas: number }> = {};
+    monthTx.forEach((t) => {
+      if (!byDate[t.date]) byDate[t.date] = { entradas: 0, saidas: 0 };
+      if (t.type === "servico" || t.type === "entrada") byDate[t.date].entradas += t.value;
+      else if (t.type === "despesa") byDate[t.date].saidas += t.value;
+    });
+    return Object.entries(byDate)
+      .map(([date, v]) => ({ date, entradas: v.entradas, saidas: v.saidas, saldo: v.entradas - v.saidas }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [monthTx]);
+
   const byPaymentMethod = PAYMENT_METHODS.map((m) => ({
     method: m,
     total: monthTx.filter((t) => t.type === "servico" && t.payment_method === m.id).reduce((s, t) => s + t.value, 0),
@@ -184,6 +196,34 @@ export function FinanceiroPanel({ transactions, barbers }: AdminData) {
           <div className={`text-xl font-bold font-mono-receipt ${net >= 0 ? "text-success" : "text-danger"}`}>{fmtMoney(net)}</div>
         </Card>
       </div>
+
+      <Card className="mb-6">
+        <h3 className="text-sm uppercase tracking-wider text-muted mb-3 font-body">Resumo diário</h3>
+        <div className="space-y-1 max-h-96 overflow-y-auto">
+          <div className="hidden sm:flex items-center justify-between text-[10px] uppercase tracking-wider text-muted font-body pb-1.5 border-b border-line">
+            <span>Dia</span>
+            <div className="flex items-center gap-3">
+              <span className="w-24 text-right">Entradas</span>
+              <span className="w-24 text-right">Saídas</span>
+              <span className="w-24 text-right">Saldo</span>
+            </div>
+          </div>
+          {dailySummary.map((d) => (
+            <div
+              key={d.date}
+              className="flex items-center justify-between flex-wrap gap-y-1 text-sm font-body py-1.5 border-b border-line last:border-0"
+            >
+              <span className="text-cream">{fmtDatePt(d.date)}</span>
+              <div className="flex items-center gap-3">
+                <span className="w-24 text-right text-success font-mono-receipt">{fmtMoney(d.entradas)}</span>
+                <span className="w-24 text-right text-danger font-mono-receipt">{fmtMoney(d.saidas)}</span>
+                <span className={`w-24 text-right font-mono-receipt ${d.saldo >= 0 ? "text-brass" : "text-danger"}`}>{fmtMoney(d.saldo)}</span>
+              </div>
+            </div>
+          ))}
+          {dailySummary.length === 0 && <p className="text-xs text-muted font-body pt-1.5">Nenhum lançamento nesse mês.</p>}
+        </div>
+      </Card>
 
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         <Card>
