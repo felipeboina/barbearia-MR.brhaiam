@@ -2,7 +2,14 @@
  * Funções de formatação — portadas de barbearia-app.jsx (linhas 30-65).
  */
 
-export const todayStr = () => new Date().toISOString().slice(0, 10);
+/**
+ * Data de "hoje" no fuso horário da barbearia (Brasil), não em UTC. O
+ * servidor (Vercel) roda em UTC — às 21h no Brasil (horário de Brasília,
+ * sempre UTC-3, já que o Brasil não tem mais horário de verão) já é meia-
+ * noite em UTC. Usar `.toISOString()` fazia qualquer cadastro feito à
+ * noite (a partir de ~21h-22h) cair no dia seguinte sem o dono perceber.
+ */
+export const todayStr = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
 
 export const fmtMoney = (n: number) => (n < 0 ? "-R$ " : "R$ ") + Math.abs(n).toFixed(2).replace(".", ",");
 
@@ -59,8 +66,8 @@ export function daysSince(dateStr: string | null | undefined) {
 export function isBirthdayToday(birthday: string | null | undefined) {
   if (!birthday) return false;
   const [, m, d] = birthday.split("-");
-  const today = new Date();
-  return parseInt(m) === today.getMonth() + 1 && parseInt(d) === today.getDate();
+  const [, todayM, todayD] = todayStr().split("-");
+  return m === todayM && d === todayD;
 }
 
 export const normalizePhone = (phone: string | null | undefined) => (phone || "").replace(/\D/g, "");
