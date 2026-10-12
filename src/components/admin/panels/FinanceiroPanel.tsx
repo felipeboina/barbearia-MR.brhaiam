@@ -80,6 +80,14 @@ export function FinanceiroPanel({ transactions, barbers }: AdminData) {
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [monthTx]);
 
+  const dailyChartData = useMemo(
+    () =>
+      [...dailySummary]
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .map((d) => ({ day: d.date.slice(8, 10), entradas: d.entradas, saidas: d.saidas, saldo: d.saldo })),
+    [dailySummary]
+  );
+
   const byPaymentMethod = PAYMENT_METHODS.map((m) => ({
     method: m,
     total: monthTx.filter((t) => t.type === "servico" && t.payment_method === m.id).reduce((s, t) => s + t.value, 0),
@@ -222,6 +230,27 @@ export function FinanceiroPanel({ transactions, barbers }: AdminData) {
             </div>
           ))}
           {dailySummary.length === 0 && <p className="text-xs text-muted font-body pt-1.5">Nenhum lançamento nesse mês.</p>}
+        </div>
+      </Card>
+
+      <h2 className="text-sm uppercase tracking-wider text-muted mb-3 font-body">Entradas e saídas por dia</h2>
+      <Card className="mb-6">
+        <div style={{ width: "100%", height: 300 }}>
+          <ResponsiveContainer>
+            <AreaChart data={dailyChartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+              <XAxis dataKey="day" stroke="var(--muted)" fontSize={12} />
+              <YAxis stroke="var(--muted)" fontSize={12} />
+              <Tooltip
+                contentStyle={{ background: "var(--panel)", border: "1px solid var(--line)", color: "var(--cream)" }}
+                formatter={(v) => fmtMoney(Number(v))}
+              />
+              <Legend />
+              <Area type="monotone" dataKey="entradas" name="Entradas" stroke="var(--success)" fill="var(--success)" fillOpacity={0.15} />
+              <Area type="monotone" dataKey="saidas" name="Saídas" stroke="var(--danger)" fill="var(--danger)" fillOpacity={0.15} />
+              <Area type="monotone" dataKey="saldo" name="Saldo" stroke="var(--brass)" fill="var(--brass)" fillOpacity={0.2} />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </Card>
 
